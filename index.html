@@ -183,6 +183,88 @@
             animation: modalZoomIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
+        /* Reference-style weekly timetable grid */
+        .scheduler-grid-scroll {
+            background: #ffffff;
+            border-color: #e7edf4 !important;
+        }
+        .scheduler-grid-table {
+            width: 100%;
+            min-width: 980px;
+            table-layout: fixed;
+            border-collapse: separate !important;
+            border-spacing: 0;
+            background: #ffffff;
+        }
+        .scheduler-grid-table .scheduler-time-heading,
+        .scheduler-grid-table .scheduler-time-cell {
+            width: 90px;
+            min-width: 90px;
+            max-width: 90px;
+        }
+        .scheduler-grid-table .scheduler-time-heading {
+            position: sticky;
+            left: 0;
+            z-index: 24;
+            background: #f8fafc !important;
+        }
+        .scheduler-grid-table .scheduler-time-cell {
+            text-align: left !important;
+            vertical-align: top;
+            background: #ffffff !important;
+            border-right: 1px solid #e7edf4 !important;
+            border-bottom: 1px solid #e7edf4 !important;
+            padding: 16px 10px 12px 12px !important;
+        }
+        .scheduler-time-label {
+            white-space: nowrap;
+            letter-spacing: -0.015em;
+        }
+        .scheduler-time-duration {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding-right: 8px;
+        }
+        .scheduler-grid-table .scheduler-day-heading {
+            background: #f8fafc !important;
+            border-right: 1px solid #e7edf4 !important;
+            border-bottom: 1px solid #e7edf4 !important;
+        }
+        .scheduler-grid-table .scheduler-day-cell {
+            padding: 6px !important;
+            background: #ffffff;
+            border-right: 1px solid #e7edf4 !important;
+            border-bottom: 1px solid #e7edf4 !important;
+            vertical-align: top;
+        }
+        .scheduler-card {
+            border-radius: 17px !important;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.025);
+            min-height: 95px;
+        }
+        .scheduler-activity-card {
+            border-width: 1px !important;
+        }
+        .scheduler-open-card {
+            border-width: 1.5px !important;
+            background: #fffdf5 !important;
+        }
+        .scheduler-empty-slot {
+            border-radius: 15px !important;
+        }
+        @media (max-width: 640px) {
+            .scheduler-grid-table {
+                min-width: 920px;
+            }
+            .scheduler-grid-table .scheduler-time-heading,
+            .scheduler-grid-table .scheduler-time-cell {
+                width: 88px;
+                min-width: 88px;
+                max-width: 88px;
+            }
+        }
+
         @media print {
             body {
                 background: #ffffff !important;
@@ -722,8 +804,8 @@
                     <button type="button" onclick="switchViewMode('day')" class="text-indigo-600 underline font-bold">Try Day View</button>
                 </div>
 
-                <div class="overflow-x-auto relative rounded-xl border border-slate-200">
-                    <table class="w-full border-collapse table-fixed min-w-[900px]" id="timetableGrid">
+                <div class="overflow-x-auto relative rounded-xl border border-slate-200 scheduler-grid-scroll">
+                    <table class="w-full border-collapse table-fixed min-w-[980px] scheduler-grid-table" id="timetableGrid">
                         <thead>
                             <tr id="timetableHeaderRow" class="bg-slate-50 text-slate-700 border-b border-slate-200">
                                 <!-- Populated by JS -->
@@ -903,6 +985,38 @@
         </div>
     </div>
 
+    <!-- Schedule Clash Warning Modal -->
+    <div id="scheduleClashModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[70] hidden items-center justify-center p-4" role="alertdialog" aria-modal="true" aria-labelledby="scheduleClashTitle" aria-describedby="scheduleClashDescription">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[88vh] flex flex-col overflow-hidden border border-amber-200 animate-modal-in">
+            <div class="px-5 py-4 border-b border-amber-100 bg-amber-50/80 flex items-center gap-3 shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+                <div>
+                    <h3 id="scheduleClashTitle" tabindex="-1" class="text-base sm:text-lg font-extrabold text-slate-900">Schedule clash detected</h3>
+                    <p id="scheduleClashCount" class="text-xs font-semibold text-amber-800 mt-0.5">This slot overlaps an existing activity.</p>
+                </div>
+            </div>
+            <div class="p-5 sm:p-6 space-y-4 overflow-y-auto">
+                <p id="scheduleClashDescription" class="text-sm text-slate-600 leading-relaxed">
+                    The selected time is already occupied on one or more days. Review the conflicts before saving.
+                </p>
+                <div id="clashConflictList" class="space-y-2 max-h-56 overflow-y-auto" aria-live="assertive"></div>
+                <div class="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs sm:text-sm text-amber-900 leading-relaxed">
+                    Saving anyway will replace only the overlapping portion of the existing activities. Any portions outside the new time range will remain scheduled.
+                </div>
+            </div>
+            <div class="px-5 py-4 border-t border-slate-100 bg-slate-50/70 flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 shrink-0">
+                <button type="button" onclick="dismissScheduleClashWarning()" class="touch-btn bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-sm px-4 py-2.5 rounded-xl transition">
+                    Go back and edit
+                </button>
+                <button type="button" onclick="confirmScheduleClashSave()" class="touch-btn bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-sm px-4 py-2.5 rounded-xl shadow-sm transition">
+                    Save anyway
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Confirm Clear Modal -->
     <div id="confirmClearModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 border border-slate-200 animate-modal-in">
@@ -1019,6 +1133,7 @@
 
         let currentActiveCategoryFilter = null;
         let currentSearchQuery = '';
+        let pendingActivitySave = null;
 
         /**************************************************************
          * 2. TIME HELPERS
@@ -1091,6 +1206,7 @@
             document.addEventListener('keydown', (e) => {
                 const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
                 if (e.key === 'Escape') {
+                    dismissScheduleClashWarning();
                     closeActivityModal();
                     closeConfirmClearModal();
                     document.getElementById('configDrawer').classList.add('hidden');
@@ -1649,7 +1765,7 @@
 
             // 1. Render Header Row
             theadRow.innerHTML = `
-                <th class="w-32 py-3.5 px-3 text-center text-xs font-bold uppercase tracking-wider text-slate-500 border-r border-slate-200 bg-slate-50/80">
+                <th class="w-[90px] min-w-[90px] py-3.5 px-3 text-center text-xs font-bold uppercase tracking-wider text-slate-500 border-r border-slate-200 bg-slate-50/80 scheduler-time-heading">
                     TIME SLOT
                 </th>
             `;
@@ -1659,7 +1775,7 @@
                 const isFull = dayFreeMins === 0;
 
                 theadRow.innerHTML += `
-                    <th class="py-3 px-3 text-center border-r border-slate-200 last:border-r-0 bg-slate-50/80">
+                    <th class="py-3 px-3 text-center border-r border-slate-200 last:border-r-0 bg-slate-50/80 scheduler-day-heading">
                         <div class="text-xs font-extrabold uppercase tracking-wider text-slate-900">${day}</div>
                         <div class="text-[11px] font-semibold mt-0.5 ${isFull ? 'text-slate-400' : 'text-emerald-600'}">
                             ${isFull ? 'Full' : `${Math.round(dayFreeMins / 60)}h free`}
@@ -1678,10 +1794,10 @@
 
                 // Time Column Cell
                 const timeTd = document.createElement('td');
-                timeTd.className = 'py-3 px-3 align-top bg-white border-r border-slate-200 text-center select-none';
+                timeTd.className = 'py-3 px-3 align-top bg-white border-r border-slate-200 text-left select-none scheduler-time-cell sticky-time-col';
                 timeTd.innerHTML = `
-                    <div class="text-xs sm:text-sm font-bold text-slate-900 tabular-nums">${slot.start} – ${slot.end}</div>
-                    <div class="text-[11px] text-slate-400 font-medium mt-0.5">${slot.duration} mins</div>
+                    <div class="text-xs sm:text-sm font-bold text-slate-900 tabular-nums scheduler-time-label">${slot.start} – ${slot.end}</div>
+                    <div class="text-[11px] text-slate-400 font-medium mt-0.5 scheduler-time-duration">${slot.duration} mins</div>
                 `;
                 tr.appendChild(timeTd);
 
@@ -1699,7 +1815,7 @@
                     });
 
                     const td = document.createElement('td');
-                    td.className = 'p-1.5 border-r border-slate-200/90 last:border-r-0 align-top relative';
+                    td.className = 'p-1.5 border-r border-slate-200/90 last:border-r-0 align-top relative scheduler-day-cell';
 
                     if (act) {
                         let spanCount = 1;
@@ -1734,7 +1850,7 @@
 
                         if (isFreeBlock) {
                             // "Open Slot" card styling matching image exactly
-                            card.className = 'timetable-cell h-full min-h-[95px] w-full rounded-2xl p-3 open-slot-pattern flex flex-col justify-between cursor-pointer';
+                            card.className = 'timetable-cell scheduler-card scheduler-open-card h-full min-h-[95px] w-full rounded-2xl p-3 open-slot-pattern flex flex-col justify-between cursor-pointer';
                             card.onclick = (e) => {
                                 if (e.target.closest('button')) return;
                                 openActivityModal({ activityId: act.id });
@@ -1762,7 +1878,7 @@
                             `;
                         } else {
                             // Scheduled Activity Card matching image exactly
-                            card.className = 'timetable-cell h-full min-h-[95px] w-full rounded-2xl p-3 flex flex-col justify-between cursor-pointer border shadow-2xs';
+                            card.className = 'timetable-cell scheduler-card scheduler-activity-card h-full min-h-[95px] w-full rounded-2xl p-3 flex flex-col justify-between cursor-pointer border shadow-2xs';
                             card.style.backgroundColor = theme.bg;
                             card.style.borderColor = theme.border;
 
@@ -1820,7 +1936,7 @@
                         const emptyBtn = document.createElement('button');
                         emptyBtn.type = 'button';
                         emptyBtn.onclick = () => openActivityModal({ day: day, startTime: slot.start, endTime: slot.end });
-                        emptyBtn.className = 'w-full h-full min-h-[95px] rounded-2xl border border-dashed border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/20 p-2 flex flex-col items-center justify-center text-center transition group/btn';
+                        emptyBtn.className = 'scheduler-empty-slot w-full h-full min-h-[95px] rounded-2xl border border-dashed border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/20 p-2 flex flex-col items-center justify-center text-center transition group/btn';
                         emptyBtn.innerHTML = `
                             <span class="text-[11px] font-medium text-slate-400 group-hover/btn:text-amber-700 flex items-center gap-1 transition">
                                 <i class="fa-solid fa-plus text-[10px]"></i> Open
@@ -2172,6 +2288,7 @@
 
         function closeActivityModal() {
             document.getElementById('activityModal').classList.add('hidden');
+            pendingActivitySave = null;
         }
 
         function resolveActivityOverlaps(day, newStartMins, newEndMins, ignoreId = null) {
@@ -2232,28 +2349,135 @@
                 return;
             }
 
-            if (editingId) {
-                appState.activities = appState.activities.filter(a => a.id !== editingId);
+            // Detect overlaps before changing or removing any existing activity.
+            const conflicts = [];
+            selectedDays.forEach(day => {
+                appState.activities.forEach(activity => {
+                    if (activity.day !== day || activity.id === editingId) return;
+
+                    const activityStart = timeToMinutes(activity.startTime);
+                    const activityEnd = timeToMinutes(activity.endTime);
+                    const overlapStart = Math.max(sMins, activityStart);
+                    const overlapEnd = Math.min(eMins, activityEnd);
+
+                    // Half-open intervals: touching endpoints (e.g. 10:00–11:00 and 11:00–12:00) do not clash.
+                    if (overlapStart < overlapEnd) {
+                        conflicts.push({
+                            day,
+                            activity,
+                            overlapStart: minutesToTime(overlapStart),
+                            overlapEnd: minutesToTime(overlapEnd)
+                        });
+                    }
+                });
+            });
+
+            const saveData = {
+                editingId,
+                title,
+                categoryId,
+                badge,
+                startTime,
+                endTime,
+                location,
+                notes,
+                selectedDays: [...selectedDays]
+            };
+
+            if (conflicts.length > 0) {
+                pendingActivitySave = saveData;
+                showScheduleClashWarning(conflicts, saveData);
+                return;
             }
 
-            selectedDays.forEach(day => {
-                resolveActivityOverlaps(day, sMins, eMins);
+            commitActivitySave(saveData);
+        }
+
+        function showScheduleClashWarning(conflicts, saveData) {
+            const modal = document.getElementById('scheduleClashModal');
+            const list = document.getElementById('clashConflictList');
+            document.getElementById('scheduleClashCount').textContent =
+                `${conflicts.length} schedule clash${conflicts.length === 1 ? '' : 'es'} found`;
+            document.getElementById('scheduleClashDescription').textContent =
+                `“${saveData.title || 'This activity'}” (${saveData.startTime}–${saveData.endTime}) overlaps with the following scheduled item${conflicts.length === 1 ? '' : 's'}. You can return to the form or save despite the warning.`;
+
+            list.innerHTML = '';
+            conflicts.forEach(conflict => {
+                const item = document.createElement('div');
+                item.className = 'rounded-xl border border-amber-200 bg-white px-3.5 py-3';
+
+                const heading = document.createElement('div');
+                heading.className = 'text-sm font-bold text-slate-900';
+                heading.textContent = `${conflict.day} · ${conflict.activity.title || 'Untitled activity'}`;
+
+                const details = document.createElement('div');
+                details.className = 'text-xs text-slate-500 mt-1';
+                const category = getCategoryById(conflict.activity.categoryId);
+                const categoryName = category ? category.name : 'Activity';
+                details.textContent = `${categoryName} · Existing ${conflict.activity.startTime}–${conflict.activity.endTime}`;
+
+                const overlap = document.createElement('div');
+                overlap.className = 'text-xs font-semibold text-amber-800 mt-1.5';
+                overlap.textContent = `Clashing interval: ${conflict.overlapStart}–${conflict.overlapEnd}`;
+
+                item.append(heading, details, overlap);
+                list.appendChild(item);
+            });
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('scheduleClashTitle').focus?.();
+        }
+
+        function dismissScheduleClashWarning() {
+            const modal = document.getElementById('scheduleClashModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            pendingActivitySave = null;
+        }
+
+        function confirmScheduleClashSave() {
+            if (!pendingActivitySave) return;
+            const saveData = pendingActivitySave;
+            pendingActivitySave = null;
+            const modal = document.getElementById('scheduleClashModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            commitActivitySave(saveData);
+        }
+
+        function commitActivitySave(saveData) {
+            if (!saveData) return;
+
+            // An edit is committed only after the user has confirmed any detected clashes.
+            if (saveData.editingId) {
+                appState.activities = appState.activities.filter(a => a.id !== saveData.editingId);
+            }
+
+            saveData.selectedDays.forEach(day => {
+                resolveActivityOverlaps(
+                    day,
+                    timeToMinutes(saveData.startTime),
+                    timeToMinutes(saveData.endTime)
+                );
                 appState.activities.push({
                     id: 'act_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-                    day: day,
-                    startTime: startTime,
-                    endTime: endTime,
-                    title: title,
-                    categoryId: categoryId,
-                    badge: badge,
-                    location: location,
-                    notes: notes
+                    day,
+                    startTime: saveData.startTime,
+                    endTime: saveData.endTime,
+                    title: saveData.title,
+                    categoryId: saveData.categoryId,
+                    badge: saveData.badge,
+                    location: saveData.location,
+                    notes: saveData.notes
                 });
             });
 
             closeActivityModal();
             renderAll();
-            showToast(`Saved "${title}"!`, 'success');
+            showToast(`Saved "${saveData.title}"!`, 'success');
         }
 
         function deleteCurrentActivity() {
