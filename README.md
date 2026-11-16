@@ -7,7 +7,7 @@ A single-page, client-side interactive timetable builder designed for **students
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
 1. **Unified, Non-Tech Friendly Schedule Setup**
    - All user-defined settings (Schedule Title, Department, Active Days, Daily Hours, Slot Duration, Lunch Break, and Subject Categories) are placed together in one intuitive, prominently visible card.
@@ -38,7 +38,7 @@ A single-page, client-side interactive timetable builder designed for **students
 
 ---
 
-## 🚀 How to Use & Enter Your Schedule Details
+##  How to Use & Enter Your Schedule Details
 
 ### Step 1: Open Schedule Setup
 - All settings are unified directly inside the **Schedule Setup & Timing** card at the top of the page.
@@ -80,8 +80,7 @@ A single-page, client-side interactive timetable builder designed for **students
 
 ---
 
-## 🛠️ Tech Stack
-- **HTML5 & Tailwind CSS** (Responsive Mobile-First UI & Print Styling)
+##  Tech Stack
 - **SheetJS (`xlsx`)** (2D Visual Grid Spreadsheet Export)
 - **html2canvas & jsPDF** (High-DPI PNG & Landscape A4 PDF Generation)
 - **JSZip** (One-Click GitHub Repository `.zip` Bundler)
