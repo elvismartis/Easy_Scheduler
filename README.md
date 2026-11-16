@@ -3,6 +3,9 @@
 A single-page, client-side interactive timetable builder designed for **students, professors, researchers, and academic staff**. Create your custom college or research schedule, automatically detect and manage free slots for deep study or relaxation, and export your timetable to **Excel (.xlsx 2D Grid)**, **Landscape PDF (.pdf)**, **High-Res Image (.png)**, or **JSON backups**.
 
 ---
+(Click here to make your own scheduler)[https://elvismartis.github.io/chronos/]
+
+---
 
 ## ✨ Key Features
 
