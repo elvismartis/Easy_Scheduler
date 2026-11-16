@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Fall Semester — Academic & Research Timetable",
+    "title": "Easy Scheduler — Academic & Research Timetable",
     "subtitle": "Faculty / Student Schedule • Smart Slot Planner"
   },
   "config": {
@@ -22,63 +22,63 @@
     {
       "id": "cat_lecture",
       "name": "Lectures",
-      "color": "#4f46e5",
+      "color": "#435585",
       "isBreak": false,
       "isFree": false
     },
     {
       "id": "cat_lab",
       "name": "Practicals / Labs",
-      "color": "#0284c7",
+      "color": "#3a6b88",
       "isBreak": false,
       "isFree": false
     },
     {
       "id": "cat_research",
       "name": "Research Time",
-      "color": "#7c3aed",
+      "color": "#635380",
       "isBreak": false,
       "isFree": false
     },
     {
       "id": "cat_study",
       "name": "Study Time",
-      "color": "#2563eb",
+      "color": "#3d5a80",
       "isBreak": false,
       "isFree": false
     },
     {
       "id": "cat_revision",
       "name": "Revision Time",
-      "color": "#0d9488",
+      "color": "#417270",
       "isBreak": false,
       "isFree": false
     },
     {
       "id": "cat_quiet",
       "name": "Quiet Time",
-      "color": "#475569",
+      "color": "#5a6472",
       "isBreak": false,
       "isFree": false
     },
     {
       "id": "cat_relax",
       "name": "Relax Time",
-      "color": "#16a34a",
+      "color": "#4f775f",
       "isBreak": true,
       "isFree": false
     },
     {
       "id": "cat_lunch",
       "name": "Lunch Break",
-      "color": "#d97706",
+      "color": "#946b54",
       "isBreak": true,
       "isFree": false
     },
     {
       "id": "cat_free",
       "name": "Free Slot",
-      "color": "#64748b",
+      "color": "#6c757d",
       "isBreak": false,
       "isFree": true
     }
