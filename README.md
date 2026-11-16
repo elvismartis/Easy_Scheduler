@@ -70,19 +70,6 @@ A single-page, client-side interactive timetable builder designed for **students
   - **Landscape PDF (`.pdf`)**
   - **High-Res Image (`.png`)**
   - **Save Template (`.json`)** for future editing.
-
----
-
-## 🌐 Deploying to GitHub Pages (Step-by-Step)
-
-1. Download the repository `.zip` bundle using the **`GitHub Repo (.zip)`** button inside the app's **Export / Save** menu (or unzip the files into a folder).
-2. Create a new repository on [GitHub](https://github.com/new) (e.g., `academic-timetable-planner`).
-3. Upload the extracted files (`index.html`, `README.md`, `LICENSE`, `.nojekyll`) to the root of your repository and commit them.
-4. Go to your repository **Settings** → **Pages** (in the left sidebar).
-5. Under **Build and deployment** → **Branch**, select `main` (or `master`) and `/ (root)`, then click **Save**.
-6. Wait 1–2 minutes. Your live interactive web app will be published at:
-   `https://<your-github-username>.github.io/<repository-name>/`
-
 ---
 
 ## 🛠️ Tech Stack
