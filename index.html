@@ -179,7 +179,7 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <span class="text-base font-bold tracking-tight text-slate-900">Chronos</span>
+                        <span class="text-base font-bold tracking-tight text-slate-900">Easy Scheduler</span>
                         <span class="text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200/70 px-2 py-0.5 rounded-full">Academic Planner</span>
                     </div>
                 </div>
@@ -581,7 +581,7 @@
                 <div id="printableSummaryLine" class="font-medium text-slate-600">
                     <!-- Dynamic summary line -->
                 </div>
-                <div>Generated with Chronos Academic Timetable Planner</div>
+                <div>Generated with Easy Scheduler Academic Timetable Planner</div>
             </div>
 
         </section>
@@ -737,7 +737,7 @@
         /**************************************************************
          * 1. STATE & CATEGORY THEME CONFIGURATION
          **************************************************************/
-        const STORAGE_KEY = 'chronos_academic_timetable_v1';
+        const STORAGE_KEY = 'Easy Scheduler_academic_timetable_v1';
         const ALL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
         // Preset Categories corresponding directly to user image
@@ -2220,7 +2220,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'chronos_timetable_template.json';
+            a.download = 'Easy Scheduler_timetable_template.json';
             a.click();
             URL.revokeObjectURL(url);
             showToast('Schedule template exported!', 'success');
@@ -2289,15 +2289,14 @@
                 const zip = new JSZip();
                 const cleanHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
                 zip.file('index.html', cleanHtml);
-                zip.file('README.md', '# 📅 Chronos Academic Timetable Planner\n\nInteractive timetable builder.');
-                zip.file('.nojekyll', '');
+                zip.file('README.md', '# 📅 Easy Scheduler: Timetable Planner\n\nInteractive timetable builder.');
                 zip.file('sample-schedule-template.json', JSON.stringify(appState, null, 2));
 
                 const blob = await zip.generateAsync({ type: 'blob' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'chronos-academic-timetable.zip';
+                a.download = 'easy_scheduler-academic-timetable.zip';
                 a.click();
                 URL.revokeObjectURL(url);
 
