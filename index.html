@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Easy Scheduler | Academic Timetable & Smart Slot Planner</title>
     <!-- Global Error Guard -->
     <script>
@@ -15,7 +15,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
     <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" crossorigin="anonymous">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
     <!-- SheetJS for 2D Excel Export -->
@@ -53,15 +53,38 @@
             color: #0f172a;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+        }
+
+        /* Prevent auto-zooming on mobile iOS Safari by ensuring font-size is at least 16px on inputs */
+        input, select, textarea {
+            font-size: 16px !important;
+            touch-action: manipulation;
+        }
+        @media (min-width: 640px) {
+            input, select, textarea {
+                font-size: 15px !important;
+            }
+            .text-entry-lg {
+                font-size: 17px !important;
+            }
+        }
+
+        /* Minimum touch target size for mobile buttons */
+        .touch-btn {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* Clean minimalist scrollbars */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
         }
         ::-webkit-scrollbar-track {
-            background: transparent;
+            background: #f1f5f9;
         }
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
@@ -73,6 +96,19 @@
 
         .tabular-nums {
             font-variant-numeric: tabular-nums;
+        }
+
+        /* Sticky Time Column in Grid View */
+        .sticky-time-col {
+            position: sticky;
+            left: 0;
+            background-color: #ffffff;
+            z-index: 10;
+            box-shadow: 2px 0 8px -2px rgba(15, 23, 42, 0.08);
+        }
+        thead th.sticky-time-col {
+            background-color: #f8fafc;
+            z-index: 20;
         }
 
         /* Timetable slot cards */
@@ -90,21 +126,27 @@
 
         /* Hover actions inside slot cards */
         .cell-hover-actions {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.15s ease, transform 0.15s ease;
-            transform: translateY(-2px);
+            opacity: 0.85;
+            transition: opacity 0.15s ease;
         }
-        .timetable-cell:hover .cell-hover-actions {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
+        @media (hover: hover) {
+            .cell-hover-actions {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.15s ease, transform 0.15s ease;
+                transform: translateY(-2px);
+            }
+            .timetable-cell:hover .cell-hover-actions {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
         }
 
         /* Open slot dashed cream styling matching image */
         .open-slot-pattern {
             background-color: #fffdf5;
-            border: 1px dashed #fcd34d;
+            border: 1.5px dashed #fcd34d;
             transition: all 0.15s ease;
         }
         .open-slot-pattern:hover {
@@ -121,7 +163,7 @@
             pointer-events: none;
         }
         .slot-highlighted {
-            box-shadow: 0 0 0 2px #475569, 0 8px 18px -3px rgba(15, 23, 42, 0.14) !important;
+            box-shadow: 0 0 0 2.5px #3b82f6, 0 8px 18px -3px rgba(15, 23, 42, 0.14) !important;
             transform: translateY(-2px) !important;
             z-index: 10;
         }
@@ -154,6 +196,13 @@
                 box-shadow: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                width: 100% !important;
+            }
+            #mobileDayViewContainer {
+                display: none !important;
+            }
+            #timetableGridContainer {
+                display: block !important;
             }
             .timetable-cell {
                 box-shadow: none !important;
@@ -163,324 +212,404 @@
             .cell-hover-actions {
                 display: none !important;
             }
+            .sticky-time-col {
+                position: static !important;
+                box-shadow: none !important;
+            }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col bg-slate-50/70 text-slate-800">
+<body class="min-h-screen flex flex-col bg-slate-50/70 text-slate-800 text-base">
 
-    <!-- Top Minimalist Header & Navigation Bar -->
-    <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 no-print transition-all">
-        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+    <!-- Top Navigation Bar -->
+    <header class="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 no-print transition-all">
+        <div class="max-w-[1600px] mx-auto px-3.5 sm:px-6 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-2.5">
             
             <!-- Brand -->
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shadow-xs">
-                    <i class="fa-solid fa-calendar-check text-sm text-slate-200"></i>
+            <div class="flex items-center space-x-2.5 sm:space-x-3">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
+                    <i class="fa-solid fa-calendar-check text-base sm:text-lg text-slate-200"></i>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <span class="text-base font-bold tracking-tight text-slate-900">Easy Scheduler</span>
-                        <span class="text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200/70 px-2 py-0.5 rounded-full">Academic Planner</span>
+                        <span class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">Easy Scheduler</span>
+                        <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 rounded-full hidden xs:inline-block">Planner</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Realtime Search Input -->
+            <!-- Realtime Search Input (Desktop & Tablet) -->
             <div class="flex-1 max-w-xs sm:max-w-sm relative hidden md:block">
-                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-sm text-slate-400"></i>
                 <input type="text" id="scheduleSearchInput" 
                     placeholder="Search subjects, rooms, notes... (Press /)" 
                     oninput="handleSearchFilter(this.value)" 
-                    class="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs pl-8 pr-8 py-2 rounded-lg border border-slate-200 focus:border-slate-400 focus:ring-1 focus:ring-slate-400 focus:outline-none transition placeholder:text-slate-400">
-                <button id="clearSearchBtn" onclick="clearSearchFilter()" class="hidden absolute right-2.5 top-2.5 text-xs text-slate-400 hover:text-slate-600" title="Clear filter">
+                    class="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-sm pl-9 pr-9 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition placeholder:text-slate-400">
+                <button id="clearSearchBtn" onclick="clearSearchFilter()" class="hidden absolute right-3 top-3 text-sm text-slate-400 hover:text-slate-600" title="Clear filter">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
             <!-- Action Controls -->
-            <div class="flex items-center gap-2">
-                <button onclick="openActivityModal()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-2xs flex items-center gap-1.5 transition active:scale-98" title="Add activity (Shortcut: N)">
-                    <i class="fa-solid fa-plus text-[11px]"></i>
+            <div class="flex items-center gap-1.5 sm:gap-2 ml-auto">
+                <!-- Add Activity Button (Prominent) -->
+                <button onclick="openActivityModal()" class="touch-btn bg-slate-900 hover:bg-slate-800 text-white text-sm sm:text-base font-bold px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-xs flex items-center gap-2 transition active:scale-98" title="Add activity slot (Shortcut: N)">
+                    <i class="fa-solid fa-plus text-sm"></i>
                     <span>Add Activity</span>
                 </button>
 
-                <button onclick="autoFillFreeSlots()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 text-xs font-medium px-3 py-2 rounded-lg shadow-2xs flex items-center gap-1.5 transition active:scale-98" title="Scan and mark unassigned gaps as Open Slots (Shortcut: F)">
-                    <i class="fa-solid fa-wand-magic-sparkles text-slate-500 text-[11px]"></i>
-                    <span class="hidden sm:inline">Fill Empty Slots</span>
+                <!-- Fill Empty Slots Button -->
+                <button onclick="autoFillFreeSlots()" class="touch-btn bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 text-sm font-semibold px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl shadow-2xs flex items-center gap-2 transition active:scale-98" title="Scan and mark unassigned gaps as Open Slots (Shortcut: F)">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-500 text-sm"></i>
+                    <span class="hidden sm:inline">Fill Empty</span>
                 </button>
 
-                <button onclick="toggleConfigDrawer()" id="btnToggleConfigDrawer" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 text-xs font-medium px-3 py-2 rounded-lg shadow-2xs flex items-center gap-1.5 transition active:scale-98" title="Configure timetable grid, lunch, and categories">
-                    <i class="fa-solid fa-sliders text-slate-500 text-[11px]"></i>
-                    <span class="hidden sm:inline">Settings</span>
+                <!-- Schedule Setup Toggle Button -->
+                <button onclick="toggleSetupPanel()" id="btnToggleSetupPanel" class="touch-btn bg-white hover:bg-slate-50 text-slate-800 border-2 border-indigo-200 hover:border-indigo-400 text-sm font-bold px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl shadow-2xs flex items-center gap-2 transition active:scale-98" title="Open / Close Schedule Setup">
+                    <i class="fa-solid fa-sliders text-indigo-600 text-sm"></i>
+                    <span class="hidden sm:inline">Schedule Setup</span>
+                    <span id="setupBadgeDot" class="w-2 h-2 rounded-full bg-indigo-600"></span>
                 </button>
 
                 <!-- Export Menu -->
                 <div class="relative inline-block text-left" id="exportDropdownContainer">
-                    <button onclick="toggleExportMenu()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 text-xs font-medium px-3 py-2 rounded-lg shadow-2xs flex items-center gap-1.5 transition active:scale-98">
-                        <i class="fa-solid fa-download text-slate-500 text-[11px]"></i>
-                        <span>Export</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                    <button onclick="toggleExportMenu()" class="touch-btn bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 text-sm font-semibold px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl shadow-2xs flex items-center gap-1.5 transition active:scale-98">
+                        <i class="fa-solid fa-download text-slate-500 text-sm"></i>
+                        <span class="hidden sm:inline">Export</span>
+                        <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
                     </button>
-                    <div id="exportMenu" class="hidden absolute right-0 mt-1.5 w-64 rounded-xl shadow-lg bg-white ring-1 ring-slate-200 divide-y divide-slate-100 z-50 text-slate-700 animate-modal-in">
-                        <div class="py-1">
-                            <div class="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Documents & Print</div>
-                            <button onclick="exportToExcel()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 transition">
-                                <i class="fa-solid fa-file-excel text-emerald-600 text-sm w-4"></i>
+                    <div id="exportMenu" class="hidden absolute right-0 mt-2 w-72 rounded-2xl shadow-xl bg-white ring-1 ring-slate-200 divide-y divide-slate-100 z-50 text-slate-700 animate-modal-in">
+                        <div class="p-2">
+                            <div class="px-3 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider">Documents & Print</div>
+                            <button onclick="exportToExcel()" class="w-full text-left px-3 py-2.5 text-sm hover:bg-slate-50 rounded-xl flex items-center gap-3 text-slate-700 transition">
+                                <i class="fa-solid fa-file-excel text-emerald-600 text-base w-5"></i>
                                 <div>
-                                    <div class="font-medium text-slate-800">Excel 2D Grid (.xlsx)</div>
-                                    <div class="text-[10px] text-slate-400">Spreadsheet table + category stats</div>
+                                    <div class="font-bold text-slate-800">Excel 2D Grid (.xlsx)</div>
+                                    <div class="text-xs text-slate-400">Full spreadsheet grid + hours summary</div>
                                 </div>
                             </button>
-                            <button onclick="exportToPDF()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 transition">
-                                <i class="fa-solid fa-file-pdf text-rose-600 text-sm w-4"></i>
+                            <button onclick="exportToPDF()" class="w-full text-left px-3 py-2.5 text-sm hover:bg-slate-50 rounded-xl flex items-center gap-3 text-slate-700 transition">
+                                <i class="fa-solid fa-file-pdf text-rose-600 text-base w-5"></i>
                                 <div>
-                                    <div class="font-medium text-slate-800">Landscape PDF (.pdf)</div>
-                                    <div class="text-[10px] text-slate-400">Crisp A4 format ready for print</div>
+                                    <div class="font-bold text-slate-800">Landscape PDF (.pdf)</div>
+                                    <div class="text-xs text-slate-400">Crisp A4 format ready for printing</div>
                                 </div>
                             </button>
-                            <button onclick="exportToPNG()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 transition">
-                                <i class="fa-solid fa-image text-sky-600 text-sm w-4"></i>
+                            <button onclick="exportToPNG()" class="w-full text-left px-3 py-2.5 text-sm hover:bg-slate-50 rounded-xl flex items-center gap-3 text-slate-700 transition">
+                                <i class="fa-solid fa-image text-sky-600 text-base w-5"></i>
                                 <div>
-                                    <div class="font-medium text-slate-800">High-Res Image (.png)</div>
-                                    <div class="text-[10px] text-slate-400">2x Retina snapshot for sharing</div>
+                                    <div class="font-bold text-slate-800">High-Res Image (.png)</div>
+                                    <div class="text-xs text-slate-400">Crisp snapshot for sharing</div>
                                 </div>
                             </button>
                         </div>
-                        <div class="py-1">
-                            <div class="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Backups & Code</div>
-                            <button onclick="exportJSON()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 transition">
-                                <i class="fa-solid fa-code text-indigo-600 text-sm w-4"></i>
-                                <span>Save Template (.json)</span>
+                        <div class="p-2">
+                            <div class="px-3 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider">Backups & Code</div>
+                            <button onclick="exportJSON()" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-xl flex items-center gap-3 text-slate-700 transition">
+                                <i class="fa-solid fa-code text-indigo-600 text-base w-5"></i>
+                                <span class="font-medium">Save Template (.json)</span>
                             </button>
-                            <label class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 transition cursor-pointer">
-                                <i class="fa-solid fa-upload text-indigo-500 text-sm w-4"></i>
-                                <span>Load Template (.json)</span>
+                            <label class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-xl flex items-center gap-3 text-slate-700 transition cursor-pointer">
+                                <i class="fa-solid fa-upload text-indigo-500 text-base w-5"></i>
+                                <span class="font-medium">Load Template (.json)</span>
                                 <input type="file" id="jsonImportInput" accept=".json" class="hidden" onchange="importJSON(event)">
                             </label>
-                            <button onclick="downloadGitHubRepoZip()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
-                                <i class="fa-brands fa-github text-slate-800 text-sm w-4"></i>
-                                <span>Download GitHub Repo (.zip)</span>
+                            <button onclick="downloadGitHubRepoZip()" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-xl text-slate-700 flex items-center gap-3 transition">
+                                <i class="fa-brands fa-github text-slate-800 text-base w-5"></i>
+                                <span class="font-medium">Download GitHub Repo (.zip)</span>
                             </button>
                         </div>
-                        <div class="py-1">
-                            <button onclick="loadSampleSchedule()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 text-slate-600 flex items-center gap-2.5 transition">
-                                <i class="fa-solid fa-rotate-left text-slate-400 text-sm w-4"></i>
-                                <span>Load Demo Sample Data</span>
+                        <div class="p-2">
+                            <button onclick="loadSampleSchedule()" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-xl text-slate-600 flex items-center gap-3 transition">
+                                <i class="fa-solid fa-rotate-left text-slate-400 text-base w-5"></i>
+                                <span class="font-medium">Load Demo Sample Data</span>
                             </button>
-                            <button onclick="openConfirmClearModal()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-rose-50 text-rose-600 flex items-center gap-2.5 transition">
-                                <i class="fa-solid fa-trash-can text-sm w-4"></i>
-                                <span>Clear Entire Schedule</span>
+                            <button onclick="openConfirmClearModal()" class="w-full text-left px-3 py-2 text-sm hover:bg-rose-50 rounded-xl text-rose-600 flex items-center gap-3 transition">
+                                <i class="fa-solid fa-trash-can text-base w-5"></i>
+                                <span class="font-semibold">Clear Entire Schedule</span>
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Mobile Search Bar (Visible on mobile screens) -->
+            <div class="w-full relative md:hidden pt-1 pb-0.5">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-sm text-slate-400"></i>
+                <input type="text" id="scheduleSearchInputMobile" 
+                    placeholder="Search classes, rooms, notes..." 
+                    oninput="handleSearchFilter(this.value)" 
+                    class="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-base pl-9 pr-9 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition placeholder:text-slate-400">
+            </div>
+
         </div>
     </header>
 
-    <!-- Collapsible Configuration Drawer -->
-    <section id="configDrawer" class="bg-white border-b border-slate-200/90 shadow-xs no-print hidden transition-all duration-200">
-        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-5">
-            <div class="flex flex-wrap items-center justify-between pb-3 mb-4 border-b border-slate-100 gap-3">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Planner Settings</span>
-                    <span class="text-xs text-slate-400">|</span>
-                    <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-xs font-medium">
-                        <button type="button" onclick="switchConfigTab('grid')" id="tabBtn-grid" class="px-3 py-1 rounded-md bg-white text-slate-800 shadow-2xs font-semibold transition">Grid & Hours</button>
-                        <button type="button" onclick="switchConfigTab('lunch')" id="tabBtn-lunch" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">Lunch Break</button>
-                        <button type="button" onclick="switchConfigTab('categories')" id="tabBtn-categories" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">Categories</button>
+    <!-- Main Container -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto px-3.5 sm:px-6 py-4 sm:py-6 space-y-5">
+
+        <!-- ======================================================== -->
+        <!-- UNIFIED SCHEDULE SETUP & TIMING PANEL                    -->
+        <!-- All user-defined fields placed together in one place     -->
+        <!-- ======================================================== -->
+        <section id="unifiedSetupPanel" class="bg-white rounded-2xl border-2 border-indigo-100 shadow-sm no-print overflow-hidden transition-all">
+            
+            <!-- Panel Header -->
+            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-indigo-300 text-lg shrink-0">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                            <span>Schedule Setup & Timing</span>
+                            <span class="text-xs font-semibold bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 px-2 py-0.5 rounded-full">Easy Editor</span>
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-0.5">
+                            Edit your timetable title, active days, working hours, and lunch break all in one intuitive place.
+                        </p>
                     </div>
                 </div>
-                <button onclick="toggleConfigDrawer()" class="text-slate-400 hover:text-slate-600 text-xs flex items-center gap-1 transition">
-                    <i class="fa-solid fa-xmark text-sm"></i>
-                    <span>Close</span>
-                </button>
+
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="toggleSetupPanel()" id="btnCollapseSetup" class="touch-btn text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 text-white px-3.5 py-2 rounded-xl border border-white/20 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-chevron-up text-xs transition-transform" id="setupChevronIcon"></i>
+                        <span id="setupCollapseLabel">Minimize Setup</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Tab Content 1: Grid & Hours -->
-            <div id="tabContent-grid" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
-                    <div class="md:col-span-6 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-xs font-semibold text-slate-700">Active Days of the Week</label>
-                            <div class="flex gap-2 text-[11px] text-slate-500">
-                                <button type="button" onclick="quickSelectDays('weekdays')" class="hover:text-slate-900 underline">Mon–Fri</button>
-                                <button type="button" onclick="quickSelectDays('all')" class="hover:text-slate-900 underline">Mon–Sun</button>
+            <!-- Panel Body (Contains all user defined fields) -->
+            <div id="unifiedSetupPanelBody" class="p-4 sm:p-6 space-y-6">
+
+                <!-- 1. Timetable Basic Info (Title & Subtitle) -->
+                <div class="bg-slate-50/70 p-4 sm:p-5 rounded-2xl border border-slate-200/80">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">1</span>
+                        <h3 class="text-sm sm:text-base font-bold text-slate-900">Schedule Header & Information</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Timetable Title / Academic Program *</label>
+                            <input type="text" id="unifiedTitleInput" 
+                                oninput="handleTitleChange(this.value)" 
+                                placeholder="e.g., Fall Semester — Academic & Research Timetable" 
+                                class="w-full text-base font-semibold rounded-xl border-2 border-slate-200 bg-white px-3.5 py-2.5 sm:py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900 placeholder:text-slate-400">
+                            <span class="text-xs text-slate-500 mt-1 block">Displayed at the top of your weekly timetable and exported PDFs.</span>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Department / Subtitle / Batch *</label>
+                            <input type="text" id="unifiedSubtitleInput" 
+                                oninput="handleSubtitleChange(this.value)" 
+                                placeholder="e.g., Faculty Schedule • Dept. of Computer Science" 
+                                class="w-full text-base font-semibold rounded-xl border-2 border-slate-200 bg-white px-3.5 py-2.5 sm:py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900 placeholder:text-slate-400">
+                            <span class="text-xs text-slate-500 mt-1 block">Specify instructor, department, semester, or student group.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Working Days & Timetable Hours -->
+                <div class="bg-slate-50/70 p-4 sm:p-5 rounded-2xl border border-slate-200/80">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">2</span>
+                        <h3 class="text-sm sm:text-base font-bold text-slate-900">Working Days & Daily Hours</h3>
+                    </div>
+
+                    <!-- Days Selection -->
+                    <div class="mb-5">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <label class="text-sm font-bold text-slate-700">Active Days of the Week</label>
+                            <div class="flex gap-2 text-xs font-semibold text-indigo-700">
+                                <button type="button" onclick="quickSelectUnifiedDays('weekdays')" class="hover:underline bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-lg">Mon–Fri (5 Days)</button>
+                                <button type="button" onclick="quickSelectUnifiedDays('sat-weekdays')" class="hover:underline bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-lg">Mon–Sat (6 Days)</button>
+                                <button type="button" onclick="quickSelectUnifiedDays('all')" class="hover:underline bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-lg">All 7 Days</button>
                             </div>
                         </div>
-                        <div id="daysCheckboxContainer" class="flex flex-wrap gap-1.5">
+                        <div id="unifiedDaysContainer" class="flex flex-wrap gap-2 pt-1">
                             <!-- Populated by JS -->
                         </div>
                     </div>
 
-                    <div class="md:col-span-6 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Daily Start</label>
-                                <input type="time" id="cfgStartTime" class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Daily End</label>
-                                <input type="time" id="cfgEndTime" class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Slot Interval</label>
-                                <div class="flex gap-1">
-                                    <select id="cfgSlotPreset" onchange="handleSlotPresetChange()" class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
-                                        <option value="15">15m</option>
-                                        <option value="30">30m</option>
-                                        <option value="45">45m</option>
-                                        <option value="60">60m</option>
-                                        <option value="custom">Custom...</option>
-                                    </select>
-                                    <input type="number" id="cfgCustomSlot" min="10" max="180" step="5" class="hidden w-16 rounded-lg border border-slate-200 bg-white px-1.5 py-1.5 text-xs" placeholder="Mins">
-                                </div>
-                            </div>
+                    <!-- Daily Hours: Start, End, Slot Interval -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-slate-200/70">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Daily Start Time</label>
+                            <input type="time" id="unifiedStartTime" 
+                                class="w-full text-base font-bold rounded-xl border-2 border-slate-200 bg-white px-3.5 py-2.5 sm:py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900">
+                            <span class="text-xs text-slate-500 mt-1 block">Earliest class or activity (e.g., 08:30)</span>
                         </div>
-
-                        <div class="mt-3 flex items-center justify-end pt-3 border-t border-slate-200/60">
-                            <button onclick="applyGridConfig()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-1.5 px-4 rounded-lg shadow-2xs transition flex items-center gap-1.5">
-                                <i class="fa-solid fa-check text-[11px]"></i>
-                                Apply Grid Settings
-                            </button>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Daily End Time</label>
+                            <input type="time" id="unifiedEndTime" 
+                                class="w-full text-base font-bold rounded-xl border-2 border-slate-200 bg-white px-3.5 py-2.5 sm:py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900">
+                            <span class="text-xs text-slate-500 mt-1 block">Latest class or activity (e.g., 17:30)</span>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Slot Interval (Period Length)</label>
+                            <div class="flex gap-2">
+                                <select id="unifiedSlotPreset" onchange="handleUnifiedSlotPresetChange()" 
+                                    class="w-full text-base font-semibold rounded-xl border-2 border-slate-200 bg-white px-3.5 py-2.5 sm:py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900">
+                                    <option value="15">15 Minutes</option>
+                                    <option value="30">30 Minutes</option>
+                                    <option value="45">45 Minutes</option>
+                                    <option value="60">60 Minutes (1 Hour)</option>
+                                    <option value="90">90 Minutes (1.5 Hours)</option>
+                                    <option value="custom">Custom...</option>
+                                </select>
+                                <input type="number" id="unifiedCustomSlot" min="10" max="240" step="5" 
+                                    class="hidden w-24 text-base font-semibold rounded-xl border-2 border-slate-200 bg-white px-2.5 py-2.5" placeholder="Mins">
+                            </div>
+                            <span class="text-xs text-slate-500 mt-1 block">Time grid interval across all days</span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Tab Content 2: Lunch Break -->
-            <div id="tabContent-lunch" class="hidden space-y-4">
-                <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200/80 max-w-2xl">
+                <!-- 3. Mandatory Daily Lunch Break -->
+                <div class="bg-slate-50/70 p-4 sm:p-5 rounded-2xl border border-slate-200/80">
                     <div class="flex items-center gap-2 mb-2">
-                        <i class="fa-solid fa-utensils text-slate-600 text-xs"></i>
-                        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Mandatory Daily Lunch Break</h4>
+                        <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">3</span>
+                        <h3 class="text-sm sm:text-base font-bold text-slate-900">Mandatory Daily Lunch Break</h3>
                     </div>
-                    <p class="text-xs text-slate-500 mb-3 leading-relaxed">Block out a guaranteed lunch and recharge window (minimum 30 minutes) across all your active days.</p>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                    <p class="text-xs sm:text-sm text-slate-500 mb-4">
+                        Block out a dedicated lunch and recharge window (minimum 30 minutes) across all your active days.
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Lunch Start Time</label>
-                            <input type="time" id="cfgLunchStart" class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Lunch Start Time</label>
+                            <input type="time" id="unifiedLunchStart" 
+                                class="w-full text-base font-bold rounded-xl border-2 border-slate-200 bg-white px-3.5 py-2.5 sm:py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Lunch End Time</label>
-                            <input type="time" id="cfgLunchEnd" class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Lunch End Time</label>
+                            <input type="time" id="unifiedLunchEnd" 
+                                class="w-full text-base font-bold rounded-xl border-2 border-slate-200 bg-white px-3.5 py-2.5 sm:py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900">
+                        </div>
+                        <div class="flex flex-col justify-end">
+                            <label class="flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-slate-700 cursor-pointer select-none py-2">
+                                <input type="checkbox" id="unifiedLunchOverwrite" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                <span>Overwrite conflicting slots</span>
+                            </label>
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200/60">
-                        <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
-                            <input type="checkbox" id="cfgLunchOverwrite" class="rounded border-slate-300 text-slate-800 focus:ring-slate-400">
-                            <span>Overwrite existing classes/slots during this window</span>
-                        </label>
-                        <button onclick="applyLunchToAllDays()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-1.5 px-4 rounded-lg shadow-2xs transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-mug-hot text-[11px]"></i>
-                            Apply Lunch to All Days
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200/70">
+                        <button type="button" onclick="applyLunchOnly()" class="touch-btn bg-white hover:bg-slate-100 text-slate-800 border-2 border-slate-200 font-bold text-xs sm:text-sm px-4 py-2 rounded-xl transition flex items-center gap-2 shadow-2xs">
+                            <i class="fa-solid fa-utensils text-orange-500 text-sm"></i>
+                            <span>Apply Lunch Window Only</span>
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Tab Content 3: Categories & Palette -->
-            <div id="tabContent-categories" class="hidden space-y-4">
-                <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
-                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Academic & Focus Categories</h4>
-                            <p class="text-[11px] text-slate-500">Manage categories, adjust palette colors, or add custom tags.</p>
+                <!-- 4. Academic & Activity Categories -->
+                <div class="bg-slate-50/70 p-4 sm:p-5 rounded-2xl border border-slate-200/80">
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">4</span>
+                            <h3 class="text-sm sm:text-base font-bold text-slate-900">Subject Categories & Colors</h3>
                         </div>
-                        <button type="button" onclick="restoreMinimalistPalette()" class="text-xs text-slate-600 hover:text-slate-900 font-medium px-2.5 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-wand-magic-sparkles text-[11px] text-slate-500"></i>
-                            Restore Default Palette
+                        <button type="button" onclick="restoreMinimalistPalette()" class="text-xs font-semibold text-indigo-700 hover:underline flex items-center gap-1.5">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>Reset Colors</span>
                         </button>
                     </div>
 
-                    <!-- Add Category Form -->
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <input type="text" id="newCatName" placeholder="New category name (e.g., Office Hours, Seminar)..." 
-                            class="flex-1 min-w-[200px] rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
-                        <div class="flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-lg">
-                            <span class="text-[11px] text-slate-500">Color:</span>
-                            <input type="color" id="newCatColor" value="#3b82f6" class="w-6 h-6 rounded-md cursor-pointer border-0 p-0 bg-transparent" title="Pick Category Color">
+                    <!-- Add New Category Form -->
+                    <div class="flex flex-wrap gap-2.5 mb-3.5">
+                        <input type="text" id="newCatName" placeholder="Add custom category (e.g. Office Hours, Seminar)..." 
+                            class="flex-1 min-w-[220px] text-base font-medium rounded-xl border-2 border-slate-200 bg-white px-3.5 py-2.5 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition">
+                        <div class="flex items-center gap-2 bg-white border-2 border-slate-200 px-3 py-2 rounded-xl">
+                            <span class="text-xs font-semibold text-slate-500">Color:</span>
+                            <input type="color" id="newCatColor" value="#3b82f6" class="w-7 h-7 rounded-lg cursor-pointer border-0 p-0 bg-transparent" title="Pick Category Color">
                         </div>
-                        <button onclick="addNewCategory()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition">
+                        <button type="button" onclick="addNewCategory()" class="touch-btn bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition">
                             Add Category
                         </button>
                     </div>
 
-                    <!-- Category Badges List -->
-                    <div id="categoryManagerList" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1">
+                    <!-- Category Pills List -->
+                    <div id="categoryManagerList" class="flex flex-wrap gap-2 pt-1 max-h-40 overflow-y-auto">
                         <!-- Populated by JS -->
                     </div>
                 </div>
+
+                <!-- Setup Action Footer: Big Primary Apply Button -->
+                <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-200">
+                    <div class="text-xs sm:text-sm text-slate-500 flex items-center gap-1.5">
+                        <i class="fa-solid fa-cloud-arrow-up text-emerald-600 text-base"></i>
+                        <span>Settings are automatically preserved in your browser local storage.</span>
+                    </div>
+
+                    <button type="button" onclick="applyAllScheduleSettings()" class="touch-btn bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2.5 active:scale-98">
+                        <i class="fa-solid fa-circle-check text-lg"></i>
+                        <span>Apply & Save Schedule Settings</span>
+                    </button>
+                </div>
+
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Main Container -->
-    <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-5 space-y-4">
-
-        <!-- 1. Top 5 Metric Cards matching user reference image -->
+        <!-- Top 5 Metric Cards -->
         <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 no-print" id="topMetricsRow">
             
             <!-- 1. Classes & Labs -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between hover:border-blue-300 transition-all cursor-pointer" onclick="setCategoryFilter('cat_class')">
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between hover:border-blue-400 transition-all cursor-pointer" onclick="setCategoryFilter('cat_class')">
                 <div>
-                    <div class="text-xs font-medium text-slate-500 mb-1">Classes & Labs</div>
-                    <div id="statClassesHours" class="text-2xl font-bold text-slate-900 tabular-nums">14.0h</div>
+                    <div class="text-xs sm:text-sm font-semibold text-slate-500 mb-1">Classes & Labs</div>
+                    <div id="statClassesHours" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">14.0h</div>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-graduation-cap text-base"></i>
+                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-graduation-cap text-lg sm:text-xl"></i>
                 </div>
             </div>
 
             <!-- 2. Quiet Time -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between hover:border-purple-300 transition-all cursor-pointer" onclick="setCategoryFilter('cat_quiet')">
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between hover:border-purple-400 transition-all cursor-pointer" onclick="setCategoryFilter('cat_quiet')">
                 <div>
-                    <div class="text-xs font-medium text-purple-700 mb-1">Quiet Time</div>
-                    <div id="statQuietHours" class="text-2xl font-bold text-slate-900 tabular-nums">3.0h</div>
+                    <div class="text-xs sm:text-sm font-semibold text-purple-700 mb-1">Quiet Time</div>
+                    <div id="statQuietHours" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">3.0h</div>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-mug-hot text-base"></i>
+                <div class="w-11 h-11 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-mug-hot text-lg sm:text-xl"></i>
                 </div>
             </div>
 
             <!-- 3. Research Time -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between hover:border-emerald-300 transition-all cursor-pointer" onclick="setCategoryFilter('cat_research')">
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between hover:border-emerald-400 transition-all cursor-pointer" onclick="setCategoryFilter('cat_research')">
                 <div>
-                    <div class="text-xs font-medium text-emerald-700 mb-1">Research Time</div>
-                    <div id="statResearchHours" class="text-2xl font-bold text-slate-900 tabular-nums">12.0h</div>
+                    <div class="text-xs sm:text-sm font-semibold text-emerald-700 mb-1">Research Time</div>
+                    <div id="statResearchHours" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">12.0h</div>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-emerald-100/70 text-emerald-700 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-flask text-base"></i>
+                <div class="w-11 h-11 rounded-xl bg-emerald-100/70 text-emerald-700 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-flask text-lg sm:text-xl"></i>
                 </div>
             </div>
 
             <!-- 4. Lecture Prep -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between hover:border-amber-300 transition-all cursor-pointer" onclick="setCategoryFilter('cat_prep')">
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between hover:border-amber-400 transition-all cursor-pointer" onclick="setCategoryFilter('cat_prep')">
                 <div>
-                    <div class="text-xs font-medium text-amber-800 mb-1">Lecture Prep</div>
-                    <div id="statPrepHours" class="text-2xl font-bold text-slate-900 tabular-nums">9.0h</div>
+                    <div class="text-xs sm:text-sm font-semibold text-amber-800 mb-1">Lecture Prep</div>
+                    <div id="statPrepHours" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">9.0h</div>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-amber-100/70 text-amber-700 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-book-open text-base"></i>
+                <div class="w-11 h-11 rounded-xl bg-amber-100/70 text-amber-700 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-book-open text-lg sm:text-xl"></i>
                 </div>
             </div>
 
             <!-- 5. Available Free -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between hover:border-indigo-300 transition-all cursor-pointer col-span-2 sm:col-span-1" onclick="setCategoryFilter('cat_free')">
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between hover:border-indigo-400 transition-all cursor-pointer col-span-2 sm:col-span-1" onclick="setCategoryFilter('cat_free')">
                 <div>
-                    <div class="text-xs font-medium text-indigo-600 mb-1">Available Free</div>
-                    <div id="statFreeHoursBadge" class="text-2xl font-bold text-slate-900 tabular-nums">4.0h (10%)</div>
+                    <div class="text-xs sm:text-sm font-semibold text-indigo-600 mb-1">Available Free</div>
+                    <div id="statFreeHoursBadge" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">4.0h (10%)</div>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-indigo-100/70 text-indigo-600 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-sparkles text-base"></i>
+                <div class="w-11 h-11 rounded-xl bg-indigo-100/70 text-indigo-600 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-sparkles text-lg sm:text-xl"></i>
                 </div>
             </div>
 
         </section>
 
-        <!-- Hidden elements preserved for legacy analytics bindings -->
+        <!-- Preserved hidden stats bindings -->
         <div class="hidden">
             <span id="statTotalCapacity"></span>
             <span id="statGridSummary"></span>
@@ -492,17 +621,17 @@
             <div id="categoryStatsPills"></div>
         </div>
 
-        <!-- 2. Quick-Fill Early Morning (08:30 - 09:30) Banner matching image -->
-        <section class="bg-white rounded-2xl border border-slate-200/90 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-2xs no-print">
+        <!-- Quick-Fill Early Morning (08:30 - 09:30) Banner -->
+        <section class="bg-white rounded-2xl border border-slate-200 px-4 py-3 sm:py-3.5 flex flex-wrap items-center justify-between gap-3 shadow-2xs no-print">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-bolt text-xs"></i>
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-bolt text-sm"></i>
                 </div>
                 <div>
-                    <div class="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <div class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                         <span>Quick-Fill Early Morning (08:30 – 09:30)</span>
                     </div>
-                    <div class="text-[11px] text-slate-400">
+                    <div class="text-xs sm:text-sm text-slate-500">
                         Quickly assign early focus blocks for Monday, Tuesday, and Wednesday
                     </div>
                 </div>
@@ -510,75 +639,122 @@
             
             <!-- Quick Fill Action Pills -->
             <div class="flex items-center gap-2 flex-wrap">
-                <button type="button" onclick="applyEarlyMorningPreset('cat_quiet', 'Quiet Time (EM)')" class="bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-semibold px-3 py-1.5 rounded-full transition flex items-center gap-1.5 active:scale-98">
-                    <i class="fa-solid fa-mug-hot text-[11px]"></i>
+                <button type="button" onclick="applyEarlyMorningPreset('cat_quiet', 'Quiet Time (EM)')" class="touch-btn bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs sm:text-sm font-bold px-3 sm:px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 active:scale-98">
+                    <i class="fa-solid fa-mug-hot text-xs"></i>
                     <span>+ Quiet Time (EM)</span>
                 </button>
-                <button type="button" onclick="applyEarlyMorningPreset('cat_research', 'Research Time')" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-full transition flex items-center gap-1.5 active:scale-98">
-                    <i class="fa-solid fa-flask text-[11px]"></i>
+                <button type="button" onclick="applyEarlyMorningPreset('cat_research', 'Research Time')" class="touch-btn bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs sm:text-sm font-bold px-3 sm:px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 active:scale-98">
+                    <i class="fa-solid fa-flask text-xs"></i>
                     <span>+ Research (EM)</span>
                 </button>
-                <button type="button" onclick="applyEarlyMorningPreset('cat_prep', 'Lecture Preparation (EM)')" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-semibold px-3 py-1.5 rounded-full transition flex items-center gap-1.5 active:scale-98">
-                    <i class="fa-solid fa-book-open text-[11px]"></i>
+                <button type="button" onclick="applyEarlyMorningPreset('cat_prep', 'Lecture Preparation (EM)')" class="touch-btn bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs sm:text-sm font-bold px-3 sm:px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 active:scale-98">
+                    <i class="fa-solid fa-book-open text-xs"></i>
                     <span>+ Prep (EM)</span>
                 </button>
-                <button id="activeFilterPill" onclick="clearCategoryFilter()" class="hidden text-xs bg-slate-900 text-white font-medium px-2.5 py-1.5 rounded-full flex items-center gap-1.5 transition ml-1">
+                <button id="activeFilterPill" onclick="clearCategoryFilter()" class="hidden text-xs sm:text-sm bg-slate-900 text-white font-semibold px-3 py-1.5 rounded-full flex items-center gap-2 transition ml-1">
                     <span id="activeFilterName">Filter</span>
-                    <i class="fa-solid fa-xmark text-[10px]"></i>
+                    <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
             </div>
         </section>
 
-        <!-- 3. Timetable Grid Wrapper -->
-        <section id="printableTimetableArea" class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden p-4 sm:p-5 transition-all">
+        <!-- Timetable Area (Supports 2D Grid + Mobile Day View) -->
+        <section id="printableTimetableArea" class="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden p-4 sm:p-6 transition-all">
             
-            <!-- Header Metadata -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-100">
+            <!-- Timetable Header & View Switcher -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-200">
                 <div class="flex-1">
                     <div class="flex items-center gap-2 group">
-                        <input type="text" id="scheduleTitleInput" oninput="saveHeaderMeta()" value="Fall Semester — Academic & Research Timetable" 
-                            class="text-base sm:text-lg font-bold text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-slate-800 focus:outline-none w-full sm:w-auto px-1 -ml-1 rounded transition"
+                        <input type="text" id="scheduleTitleInput" 
+                            oninput="handleTitleChange(this.value)" 
+                            value="Fall Semester — Academic & Research Timetable" 
+                            class="text-lg sm:text-2xl font-black text-slate-900 bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-indigo-600 focus:outline-none w-full px-1 -ml-1 rounded transition"
                             title="Click to edit Timetable Title">
-                        <i class="fa-solid fa-pen text-[10px] text-slate-300 group-hover:text-slate-500 transition no-print"></i>
+                        <i class="fa-solid fa-pen text-xs text-slate-400 group-hover:text-slate-600 transition no-print"></i>
                     </div>
-                    <div class="flex flex-wrap items-center gap-3 mt-0.5 text-xs text-slate-400">
-                        <input type="text" id="scheduleSubtitleInput" oninput="saveHeaderMeta()" value="Faculty Schedule • Dept. of Computer Science" 
-                            class="bg-transparent border-b border-transparent hover:border-slate-300 focus:border-slate-800 focus:outline-none text-slate-500 font-medium px-1 -ml-1 rounded transition text-xs"
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 text-xs sm:text-sm text-slate-500 font-medium">
+                        <input type="text" id="scheduleSubtitleInput" 
+                            oninput="handleSubtitleChange(this.value)" 
+                            value="Faculty Schedule • Dept. of Computer Science" 
+                            class="bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-indigo-600 focus:outline-none text-slate-600 font-semibold px-1 -ml-1 rounded transition text-xs sm:text-sm"
                             title="Click to edit Subtitle">
                         <span class="text-slate-300">•</span>
-                        <span id="headerTimeRangeBadge" class="font-medium text-slate-500 tabular-nums">08:30 – 17:30 (60m grid)</span>
+                        <span id="headerTimeRangeBadge" class="font-bold text-slate-600 tabular-nums">08:30 – 17:30 (60m grid)</span>
                     </div>
                 </div>
 
-                <!-- Mini Legend for PDF/Export -->
-                <div id="exportLegendContainer" class="flex flex-wrap items-center gap-1.5">
-                    <!-- Populated by JS -->
+                <!-- View Switcher (Weekly Grid vs Day-by-Day View) -->
+                <div class="flex items-center gap-2 self-start lg:self-auto no-print">
+                    <div class="bg-slate-100 p-1 rounded-xl flex items-center text-xs sm:text-sm font-bold border border-slate-200">
+                        <button type="button" onclick="switchViewMode('grid')" id="btnViewGrid" class="touch-btn px-3.5 py-1.5 rounded-lg bg-white text-slate-900 shadow-2xs flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-table-cells"></i>
+                            <span>Weekly Grid</span>
+                        </button>
+                        <button type="button" onclick="switchViewMode('day')" id="btnViewDay" class="touch-btn px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-calendar-day"></i>
+                            <span>Day View</span>
+                        </button>
+                    </div>
+
+                    <!-- Mini Legend for PDF/Export -->
+                    <div id="exportLegendContainer" class="hidden sm:flex flex-wrap items-center gap-1.5 ml-2">
+                        <!-- Populated by JS -->
+                    </div>
                 </div>
             </div>
 
             <!-- Active Search Filter Banner -->
-            <div id="searchFilterBanner" class="hidden mb-3 px-3 py-1.5 bg-slate-100 rounded-lg text-xs text-slate-600 flex items-center justify-between no-print">
-                <span id="searchFilterText">Filtering schedule...</span>
-                <button onclick="clearSearchFilter()" class="text-xs font-semibold text-slate-800 hover:underline">Clear Search</button>
+            <div id="searchFilterBanner" class="hidden mb-3.5 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-xl text-xs sm:text-sm text-indigo-900 flex items-center justify-between no-print">
+                <span id="searchFilterText" class="font-medium">Filtering schedule...</span>
+                <button onclick="clearSearchFilter()" class="text-xs sm:text-sm font-bold text-indigo-700 hover:underline">Clear Search</button>
             </div>
 
-            <!-- Interactive 2D Timetable Table -->
-            <div class="overflow-x-auto relative rounded-xl border border-slate-200/80">
-                <table class="w-full border-collapse table-fixed min-w-[850px]" id="timetableGrid">
-                    <thead>
-                        <tr id="timetableHeaderRow" class="bg-slate-50/90 text-slate-700 border-b border-slate-200">
+            <!-- ======================================================== -->
+            <!-- VIEW 1: INTERACTIVE 2D WEEKLY TIMETABLE GRID            -->
+            <!-- ======================================================== -->
+            <div id="timetableGridContainer">
+                <!-- Mobile Horizontal Scroll Hint -->
+                <div class="sm:hidden text-xs font-semibold text-slate-500 mb-2 flex items-center justify-between no-print bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-left-right text-indigo-600"></i>
+                        <span>Swipe left / right to view all days</span>
+                    </span>
+                    <button type="button" onclick="switchViewMode('day')" class="text-indigo-600 underline font-bold">Try Day View</button>
+                </div>
+
+                <div class="overflow-x-auto relative rounded-xl border border-slate-200">
+                    <table class="w-full border-collapse table-fixed min-w-[900px]" id="timetableGrid">
+                        <thead>
+                            <tr id="timetableHeaderRow" class="bg-slate-50 text-slate-700 border-b border-slate-200">
+                                <!-- Populated by JS -->
+                            </tr>
+                        </thead>
+                        <tbody id="timetableBody" class="divide-y divide-slate-100">
                             <!-- Populated by JS -->
-                        </tr>
-                    </thead>
-                    <tbody id="timetableBody" class="divide-y divide-slate-100">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- VIEW 2: MOBILE DAY-BY-DAY VIEW                           -->
+            <!-- Optimized for phone screens with clean vertical cards    -->
+            <!-- ======================================================== -->
+            <div id="mobileDayViewContainer" class="hidden space-y-4">
+                <!-- Day Tabs Header (Horizontally scrollable) -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none" id="mobileDayTabsRow">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Day Slots List Container -->
+                <div id="mobileDaySlotsList" class="space-y-3 pt-1">
+                    <!-- Populated by JS -->
+                </div>
             </div>
 
             <!-- Printable Bottom Summary Footer -->
-            <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
-                <div id="printableSummaryLine" class="font-medium text-slate-600">
+            <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
+                <div id="printableSummaryLine" class="font-bold text-slate-700">
                     <!-- Dynamic summary line -->
                 </div>
                 <div>Generated with Easy Scheduler Academic Timetable Planner</div>
@@ -588,124 +764,137 @@
 
     </main>
 
+    <!-- Mobile Floating Action Button (FAB) for One-Thumb Add Activity -->
+    <div class="sm:hidden fixed bottom-5 right-5 z-40 no-print">
+        <button onclick="openActivityModal()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-base px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-2.5 active:scale-95 transition border-2 border-white/20">
+            <i class="fa-solid fa-plus text-base"></i>
+            <span>Add Activity</span>
+        </button>
+    </div>
+
     <!-- Activity Add / Edit Modal -->
-    <div id="activityModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200 animate-modal-in">
+    <div id="activityModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3 sm:p-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-modal-in">
             
-            <!-- Modal Header -->
-            <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-slate-900"></span>
-                    <h3 id="modalHeaderTitle" class="text-sm font-bold text-slate-900">Assign Activity Slot</h3>
+            <!-- Modal Header (Sticky) -->
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-3 h-3 rounded-full bg-indigo-600"></span>
+                    <h3 id="modalHeaderTitle" class="text-base sm:text-lg font-extrabold text-slate-900">Assign Activity Slot</h3>
                 </div>
-                <button onclick="closeActivityModal()" class="text-slate-400 hover:text-slate-700 transition" title="Close (Esc)">
-                    <i class="fa-solid fa-xmark text-sm"></i>
+                <button onclick="closeActivityModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition" title="Close (Esc)">
+                    <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
 
-            <form id="activityForm" onsubmit="saveActivityFromModal(event)" class="p-5 space-y-4">
+            <!-- Modal Form Body (Scrollable) -->
+            <form id="activityForm" onsubmit="saveActivityFromModal(event)" class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
                 <input type="hidden" id="editingActivityId" value="">
 
-                <!-- Quick Presets matching reference -->
+                <!-- Quick Presets -->
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Quick Fill Presets</label>
-                    <div class="flex flex-wrap gap-1">
-                        <button type="button" onclick="applyQuickPreset('CNP (EM)', 'cat_class', 'EM')" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md font-medium transition">🎓 Class (CNP)</button>
-                        <button type="button" onclick="applyQuickPreset('Quiet Time (EM)', 'cat_quiet', 'EM')" class="text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md font-medium transition">☕ Quiet Time</button>
-                        <button type="button" onclick="applyQuickPreset('Research Time', 'cat_research', '')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md font-medium transition">🧪 Research</button>
-                        <button type="button" onclick="applyQuickPreset('Lecture Preparation (EM)', 'cat_prep', 'EM')" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md font-medium transition">📖 Lecture Prep</button>
-                        <button type="button" onclick="applyQuickPreset('Lunch Break', 'cat_lunch', '')" class="text-xs bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-md font-medium transition">🍱 Lunch</button>
-                        <button type="button" onclick="applyQuickPreset('Open Slot', 'cat_free', '')" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-md font-medium transition">✨ Open Slot</button>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Quick Fill Presets</label>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="applyQuickPreset('CNP (EM)', 'cat_class', 'EM')" class="touch-btn text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-xl font-bold transition">🎓 Class (CNP)</button>
+                        <button type="button" onclick="applyQuickPreset('Quiet Time (EM)', 'cat_quiet', 'EM')" class="touch-btn text-xs sm:text-sm bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-xl font-bold transition">☕ Quiet Time</button>
+                        <button type="button" onclick="applyQuickPreset('Research Time', 'cat_research', '')" class="touch-btn text-xs sm:text-sm bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-xl font-bold transition">🧪 Research</button>
+                        <button type="button" onclick="applyQuickPreset('Lecture Preparation (EM)', 'cat_prep', 'EM')" class="touch-btn text-xs sm:text-sm bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1.5 rounded-xl font-bold transition">📖 Lecture Prep</button>
+                        <button type="button" onclick="applyQuickPreset('Lunch Break', 'cat_lunch', '')" class="touch-btn text-xs sm:text-sm bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 px-3 py-1.5 rounded-xl font-bold transition">🍱 Lunch</button>
+                        <button type="button" onclick="applyQuickPreset('Open Slot', 'cat_free', '')" class="touch-btn text-xs sm:text-sm bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-3 py-1.5 rounded-xl font-bold transition">✨ Open Slot</button>
                     </div>
                 </div>
 
-                <!-- Subject Title, Tag Badge & Category -->
-                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                    <div class="sm:col-span-5">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Activity Title / Subject *</label>
-                        <input type="text" id="actTitle" required placeholder="e.g., CNP (EM), Lecture Preparation..." 
-                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
-                    </div>
-                    <div class="sm:col-span-4">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Category *</label>
-                        <select id="actCategory" required class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                <!-- Subject Title -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-800 mb-1.5">Activity Title / Subject *</label>
+                    <input type="text" id="actTitle" required placeholder="e.g., CNP (EM), Operating Systems Lab..." 
+                        class="w-full text-base font-bold rounded-xl border-2 border-slate-200 bg-white px-4 py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900 placeholder:text-slate-400">
+                </div>
+
+                <!-- Category & Tag -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-1.5">Category *</label>
+                        <select id="actCategory" required class="w-full text-base font-semibold rounded-xl border-2 border-slate-200 bg-white px-4 py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900">
                             <!-- Populated by JS -->
                         </select>
                     </div>
-                    <div class="sm:col-span-3">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tag / Batch</label>
-                        <input type="text" id="actBadge" placeholder="e.g., EM" 
-                            class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-1.5">Tag / Batch Badge <span class="text-xs font-normal text-slate-500">(Optional)</span></label>
+                        <input type="text" id="actBadge" placeholder="e.g., EM, LAB, BATCH A" 
+                            class="w-full text-base font-semibold rounded-xl border-2 border-slate-200 bg-white px-4 py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900 placeholder:text-slate-400">
                     </div>
                 </div>
 
                 <!-- Day(s) Selection -->
                 <div>
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="block text-xs font-semibold text-slate-700">Assign to Day(s) *</label>
-                        <div class="flex gap-2 text-[10px] text-slate-500">
-                            <button type="button" onclick="quickSelectModalDays('weekdays')" class="hover:text-slate-900 underline">Weekdays</button>
-                            <button type="button" onclick="quickSelectModalDays('all')" class="hover:text-slate-900 underline">All</button>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-sm font-bold text-slate-800">Assign to Day(s) *</label>
+                        <div class="flex gap-2 text-xs font-bold text-indigo-700">
+                            <button type="button" onclick="quickSelectModalDays('weekdays')" class="hover:underline">Weekdays</button>
+                            <span class="text-slate-300">|</span>
+                            <button type="button" onclick="quickSelectModalDays('all')" class="hover:underline">All Days</button>
                         </div>
                     </div>
-                    <div id="modalDaysCheckboxes" class="flex flex-wrap gap-1.5">
+                    <div id="modalDaysCheckboxes" class="flex flex-wrap gap-2 pt-1">
                         <!-- Populated by JS -->
                     </div>
                 </div>
 
-                <!-- Start & End Time + Duration Chips -->
+                <!-- Start & End Time + Duration Helpers -->
                 <div>
-                    <div class="grid grid-cols-2 gap-3 mb-1.5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Start Time *</label>
-                            <select id="actStartTime" onchange="handleModalStartTimeChange()" required class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                            <label class="block text-sm font-bold text-slate-800 mb-1.5">Start Time *</label>
+                            <select id="actStartTime" onchange="handleModalStartTimeChange()" required class="w-full text-base font-bold rounded-xl border-2 border-slate-200 bg-white px-4 py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900">
                                 <!-- Populated by JS -->
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">End Time *</label>
-                            <select id="actEndTime" required class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                            <label class="block text-sm font-bold text-slate-800 mb-1.5">End Time *</label>
+                            <select id="actEndTime" required class="w-full text-base font-bold rounded-xl border-2 border-slate-200 bg-white px-4 py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900">
                                 <!-- Populated by JS -->
                             </select>
                         </div>
                     </div>
+
                     <!-- Quick duration helper buttons -->
-                    <div class="flex items-center gap-1 text-[11px] text-slate-500">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 mr-1">Duration:</span>
-                        <button type="button" onclick="setModalDuration(60)" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 text-slate-700 transition font-medium">1h</button>
-                        <button type="button" onclick="setModalDuration(120)" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 text-slate-700 transition font-medium">2h</button>
-                        <button type="button" onclick="setModalDuration(180)" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 text-slate-700 transition font-medium">3h</button>
-                        <button type="button" onclick="setModalDuration(240)" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 text-slate-700 transition font-medium">4h</button>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-500 pt-1">
+                        <span class="font-bold text-slate-400 uppercase tracking-wider mr-1">Duration:</span>
+                        <button type="button" onclick="setModalDuration(60)" class="touch-btn px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-800 transition font-bold">1h</button>
+                        <button type="button" onclick="setModalDuration(120)" class="touch-btn px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-800 transition font-bold">2h</button>
+                        <button type="button" onclick="setModalDuration(180)" class="touch-btn px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-800 transition font-bold">3h</button>
+                        <button type="button" onclick="setModalDuration(240)" class="touch-btn px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-800 transition font-bold">4h</button>
                     </div>
                 </div>
 
                 <!-- Location & Notes -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Room / Location <span class="text-slate-400 font-normal">(Optional)</span></label>
+                        <label class="block text-sm font-bold text-slate-800 mb-1.5">Room / Location <span class="text-xs font-normal text-slate-500">(Optional)</span></label>
                         <input type="text" id="actLocation" placeholder="e.g., Room 204, Lab 3" 
-                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                            class="w-full text-base font-semibold rounded-xl border-2 border-slate-200 bg-white px-4 py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900 placeholder:text-slate-400">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Notes / Instructor <span class="text-slate-400 font-normal">(Optional)</span></label>
-                        <input type="text" id="actNotes" placeholder="e.g., Prof. Sharma, Homework prep" 
-                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                        <label class="block text-sm font-bold text-slate-800 mb-1.5">Notes / Instructor <span class="text-xs font-normal text-slate-500">(Optional)</span></label>
+                        <input type="text" id="actNotes" placeholder="e.g., Prof. Sharma, Reading" 
+                            class="w-full text-base font-semibold rounded-xl border-2 border-slate-200 bg-white px-4 py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900 placeholder:text-slate-400">
                     </div>
                 </div>
 
-                <!-- Modal Footer -->
-                <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <button type="button" id="btnDeleteActivity" onclick="deleteCurrentActivity()" class="hidden text-rose-600 hover:bg-rose-50 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-trash-can text-[11px]"></i>
-                        Delete Slot
+                <!-- Modal Footer (Sticky inside form) -->
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                    <button type="button" id="btnDeleteActivity" onclick="deleteCurrentActivity()" class="touch-btn hidden text-rose-600 hover:bg-rose-50 text-sm font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                        <span>Delete Slot</span>
                     </button>
-                    <div class="flex items-center gap-2 ml-auto">
-                        <button type="button" onclick="closeActivityModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-3.5 py-2 rounded-lg transition">
+                    <div class="flex items-center gap-2.5 ml-auto">
+                        <button type="button" onclick="closeActivityModal()" class="touch-btn bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm sm:text-base px-5 py-2.5 rounded-xl transition">
                             Cancel
                         </button>
-                        <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-2xs transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-check text-[11px]"></i>
-                            Save Slot
+                        <button type="submit" class="touch-btn bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm sm:text-base px-6 py-2.5 rounded-xl shadow-xs transition flex items-center gap-2">
+                            <i class="fa-solid fa-check text-sm"></i>
+                            <span>Save Slot</span>
                         </button>
                     </div>
                 </div>
@@ -715,22 +904,22 @@
     </div>
 
     <!-- Confirm Clear Modal -->
-    <div id="confirmClearModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-5 border border-slate-200 animate-modal-in">
-            <div class="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3 text-lg">
+    <div id="confirmClearModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 border border-slate-200 animate-modal-in">
+            <div class="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3 text-xl">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
-            <h3 class="text-base font-bold text-slate-900">Clear Entire Schedule?</h3>
-            <p class="text-xs text-slate-500 mt-1 mb-5 leading-relaxed">This will remove all classes, research blocks, and open slots from your weekly grid.</p>
-            <div class="flex justify-end gap-2">
-                <button onclick="closeConfirmClearModal()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Cancel</button>
-                <button onclick="confirmClearAllActivities()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-2xs transition">Yes, Clear Schedule</button>
+            <h3 class="text-lg font-bold text-slate-900">Clear Entire Schedule?</h3>
+            <p class="text-sm text-slate-500 mt-1.5 mb-6 leading-relaxed">This will remove all classes, research blocks, and open slots from your weekly timetable.</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeConfirmClearModal()" class="touch-btn px-4 py-2.5 rounded-xl text-sm font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Cancel</button>
+                <button onclick="confirmClearAllActivities()" class="touch-btn px-4 py-2.5 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition">Yes, Clear Schedule</button>
             </div>
         </div>
     </div>
 
     <!-- Toast Notification Container -->
-    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-md w-full pointer-events-none"></div>
 
     <!-- Main JavaScript Logic -->
     <script>
