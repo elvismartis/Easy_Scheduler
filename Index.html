@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronos | Academic Timetable & Smart Slot Planner</title>
+    <!-- Global Error Guard to prevent generic cross-origin Script error -->
+    <script>
+        window.addEventListener('error', function(e) {
+            if (e.message === 'Script error.' && !e.filename) {
+                e.preventDefault();
+            }
+        });
+    </script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <!-- SheetJS for 2D Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
+    <!-- html2canvas for PNG/PDF rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+    <!-- jsPDF for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+    <!-- JSZip for GitHub Repository .zip Packaging -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
+
+    <script>
+        if (typeof tailwind !== 'undefined') {
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            sans: ['Inter', 'sans-serif'],
+                        },
+                        colors: {
+                            academic: {
+                                50: '#f8fafc',
+                                100: '#f1f5f9',
+                                200: '#e2e8f0',
+                                700: '#334155',
+                                800: '#1e293b',
+                                900: '#0f172a',
+                            }
+                        }
+                    }
+                }
+            };
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        /* Custom scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .timetable-cell {
+            transition: all 0.15s ease-in-out;
+        }
+        .timetable-cell:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .free-slot-pattern {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 10px 10px;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Navigation & Action Bar -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30 no-print">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+            <!-- Brand -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-inner">
+                    <i class="fa-solid fa-calendar-check text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight flex items-center gap-2">
+                        Chronos Academic
+                        <span class="text-xs font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 px-2 py-0.5 rounded-full">Smart Slot Planner</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Custom Timetable, Free-Slot Finder & Multi-Format Exporter</p>
+                </div>
+            </div>
+
+            <!-- Primary Smart Actions -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <button onclick="openActivityModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow flex items-center gap-2 transition">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add Activity</span>
+                </button>
+
+                <button onclick="autoFillFreeSlots()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow flex items-center gap-2 transition" title="Automatically convert all unassigned gaps into editable Free Slots">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Fill Empty as Free Slots</span>
+                </button>
+
+                <button onclick="toggleConfigDrawer()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-medium px-3.5 py-2 rounded-lg flex items-center gap-2 transition">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Grid & Categories</span>
+                </button>
+
+                <button onclick="downloadGitHubRepoZip()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold px-3.5 py-2 rounded-lg shadow flex items-center gap-2 transition" title="Download complete GitHub Repository (.zip) with index.html, README.md, and LICENSE">
+                    <i class="fa-brands fa-github text-base"></i>
+                    <span>Download GitHub .ZIP</span>
+                </button>
+
+                <!-- Export Dropdown / Group -->
+                <div class="relative inline-block text-left" id="exportDropdownContainer">
+                    <button onclick="toggleExportMenu()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-medium px-3.5 py-2 rounded-lg flex items-center gap-2 transition">
+                        <i class="fa-solid fa-download text-indigo-400"></i>
+                        <span>Export / Save</span>
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
+                    <div id="exportMenu" class="hidden absolute right-0 mt-2 w-60 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 divide-y divide-slate-100 z-50 text-slate-700">
+                        <div class="py-1">
+                            <div class="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Print & Office Formats</div>
+                            <button onclick="exportToExcel()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3">
+                                <i class="fa-solid fa-file-excel text-emerald-600 text-base w-5"></i>
+                                <div>
+                                    <div class="font-semibold text-slate-800">Excel 2D Grid (.xlsx)</div>
+                                    <div class="text-xs text-slate-400">Editable spreadsheet + stats</div>
+                                </div>
+                            </button>
+                            <button onclick="exportToPDF()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3">
+                                <i class="fa-solid fa-file-pdf text-rose-600 text-base w-5"></i>
+                                <div>
+                                    <div class="font-semibold text-slate-800">Landscape PDF (.pdf)</div>
+                                    <div class="text-xs text-slate-400">Ready for A4 printing</div>
+                                </div>
+                            </button>
+                            <button onclick="exportToPNG()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3">
+                                <i class="fa-solid fa-image text-sky-600 text-base w-5"></i>
+                                <div>
+                                    <div class="font-semibold text-slate-800">High-Res Image (.png)</div>
+                                    <div class="text-xs text-slate-400">Share on phone or desktop</div>
+                                </div>
+                            </button>
+                        </div>
+                        <div class="py-1">
+                            <div class="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Backup & Restore</div>
+                            <button onclick="exportJSON()" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-3">
+                                <i class="fa-solid fa-code text-amber-600 w-5"></i>
+                                <span>Save Template (.json)</span>
+                            </button>
+                            <label class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-3 cursor-pointer">
+                                <i class="fa-solid fa-upload text-indigo-600 w-5"></i>
+                                <span>Load Template (.json)</span>
+                                <input type="file" id="jsonImportInput" accept=".json" class="hidden" onchange="importJSON(event)">
+                            </label>
+                            <button onclick="downloadGitHubRepoZip()" class="w-full text-left px-4 py-2 text-sm hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-3">
+                                <i class="fa-solid fa-file-zipper text-amber-600 w-5"></i>
+                                <span>Download GitHub Repo (.zip)</span>
+                            </button>
+                        </div>
+                        <div class="py-1">
+                            <button onclick="loadSampleSchedule()" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 text-indigo-600 flex items-center gap-3">
+                                <i class="fa-solid fa-flask w-5"></i>
+                                <span>Load Sample Demo Data</span>
+                            </button>
+                            <button onclick="openConfirmClearModal()" class="w-full text-left px-4 py-2 text-sm hover:bg-rose-50 text-rose-600 flex items-center gap-3">
+                                <i class="fa-solid fa-trash-can w-5"></i>
+                                <span>Clear Entire Schedule</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Collapsible Configuration & Custom Category Drawer -->
+    <section id="configDrawer" class="bg-white border-b border-slate-200 shadow-sm no-print hidden">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-gears text-indigo-600 text-lg"></i>
+                    <h2 class="text-base font-bold text-slate-800">Timetable Configuration & Custom Categories</h2>
+                </div>
+                <button onclick="toggleConfigDrawer()" class="text-slate-400 hover:text-slate-600 text-sm flex items-center gap-1">
+                    <i class="fa-solid fa-xmark text-lg"></i> Close Panel
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- 1. Grid Time & Granularity Settings -->
+                <div class="lg:col-span-5 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-regular fa-clock text-indigo-600"></i>
+                        1. Timetable Grid & Granularity
+                    </h3>
+
+                    <!-- Active Days Checkboxes -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Active Days of the Week</label>
+                        <div id="daysCheckboxContainer" class="flex flex-wrap gap-1.5">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Daily Start Time</label>
+                            <input type="time" id="cfgStartTime" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Daily End Time</label>
+                            <input type="time" id="cfgEndTime" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Slot Interval (Mins)</label>
+                            <div class="flex gap-1">
+                                <select id="cfgSlotPreset" onchange="handleSlotPresetChange()" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                    <option value="15">15 mins</option>
+                                    <option value="30">30 mins</option>
+                                    <option value="45">45 mins</option>
+                                    <option value="60">60 mins</option>
+                                    <option value="custom">Custom...</option>
+                                </select>
+                                <input type="number" id="cfgCustomSlot" min="10" max="180" step="5" class="hidden w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-sm" placeholder="Mins">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="applyGridConfig()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2.5 px-4 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate"></i>
+                        Update Timetable Grid
+                    </button>
+                </div>
+
+                <!-- 2. Mandatory Daily Lunch Break Builder -->
+                <div class="lg:col-span-3 bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-utensils text-amber-600"></i>
+                            2. Daily Lunch Break
+                        </h3>
+                        <p class="text-xs text-slate-500 mb-3">Set your preferred lunch window (minimum 30 minutes). Apply across all active days in one click.</p>
+
+                        <div class="grid grid-cols-2 gap-2.5 mb-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Lunch Start</label>
+                                <input type="time" id="cfgLunchStart" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Lunch End</label>
+                                <input type="time" id="cfgLunchEnd" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm">
+                            </div>
+                        </div>
+
+                        <label class="flex items-center gap-2 text-xs text-slate-600 mb-3 cursor-pointer">
+                            <input type="checkbox" id="cfgLunchOverwrite" class="rounded text-indigo-600 focus:ring-indigo-500">
+                            <span>Overwrite existing slots during lunch window</span>
+                        </label>
+                    </div>
+
+                    <button onclick="applyLunchToAllDays()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs py-2.5 px-4 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-mug-hot"></i>
+                        Apply Lunch Break (Min 30m)
+                    </button>
+                </div>
+
+                <!-- 3. User-Defined Category Manager -->
+                <div class="lg:col-span-4 bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-tags text-emerald-600"></i>
+                            3. Academic & Relax Categories
+                        </h3>
+                        <p class="text-xs text-slate-500 mb-2.5">Define custom block types (e.g., Quiet Time, Research, Revision, Lectures).</p>
+
+                        <!-- Add Category Input Row -->
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="newCatName" placeholder="New Category (e.g., Office Hours)" class="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <input type="color" id="newCatColor" value="#6366f1" class="w-9 h-8 rounded cursor-pointer border border-slate-300 p-0.5 bg-white" title="Pick Category Color">
+                            <button onclick="addNewCategory()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                                Add
+                            </button>
+                        </div>
+
+                        <!-- Category Badges List -->
+                        <div id="categoryManagerList" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-1">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        <!-- Live Analytics & Smart Slot Finder Bar -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 no-print">
+            <!-- Key Metric Cards -->
+            <div class="lg:col-span-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-semibold text-slate-400 uppercase">Total Capacity</span>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="statTotalCapacity" class="text-2xl font-extrabold text-slate-800">0h</span>
+                        <i class="fa-regular fa-calendar text-slate-300 text-lg"></i>
+                    </div>
+                    <span id="statGridSummary" class="text-[11px] text-slate-400 mt-1">6 days active</span>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-semibold text-indigo-600 uppercase">Scheduled Work</span>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="statScheduledHours" class="text-2xl font-extrabold text-indigo-600">0h</span>
+                        <i class="fa-solid fa-book-open text-indigo-200 text-lg"></i>
+                    </div>
+                    <span class="text-[11px] text-slate-400 mt-1">Classes, Study & Labs</span>
+                </div>
+
+                <div class="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-emerald-700 uppercase">Free Hours Left</span>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="statFreeHours" class="text-2xl font-extrabold text-emerald-700">0h</span>
+                        <i class="fa-solid fa-sparkles text-emerald-400 text-lg"></i>
+                    </div>
+                    <span id="statFreeSlotsCount" class="text-[11px] text-emerald-600 font-medium mt-1">Available to assign</span>
+                </div>
+
+                <div class="bg-amber-50/70 p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-amber-700 uppercase">Relax & Lunch</span>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="statBreakHours" class="text-2xl font-extrabold text-amber-700">0h</span>
+                        <i class="fa-solid fa-mug-saucer text-amber-300 text-lg"></i>
+                    </div>
+                    <span class="text-[11px] text-amber-600 mt-1">Restorative blocks</span>
+                </div>
+            </div>
+
+            <!-- Category Distribution Breakdown & Quick Filter -->
+            <div class="lg:col-span-7 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Category Hours Breakdown</h3>
+                        <span class="text-xs text-slate-400">(Click any Free Slot or empty cell in the grid to assign study/relax time)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="clearOnlyFreeSlots()" class="text-xs text-slate-500 hover:text-rose-600 font-medium px-2 py-0.5 rounded border border-slate-200 hover:border-rose-200 transition">
+                            Reset "Free Slot" Labels
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stacked Progress Bar -->
+                <div id="categoryProgressBar" class="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex mb-3">
+                    <!-- Dynamic segments -->
+                </div>
+
+                <!-- Category Pills with Hours -->
+                <div id="categoryStatsPills" class="flex flex-wrap gap-2">
+                    <!-- Dynamic pills -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Printable / Exportable Timetable Wrapper -->
+        <section id="printableTimetableArea" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-4 sm:p-6">
+            
+            <!-- Editable Timetable Header (Included in PDF/PNG exports) -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-5 border-b border-slate-200">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="scheduleTitleInput" oninput="saveHeaderMeta()" value="Fall Semester — Academic & Research Timetable" 
+                            class="text-xl sm:text-2xl font-extrabold text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-600 focus:outline-none w-full sm:w-auto px-1 -ml-1 rounded transition"
+                            title="Click to edit Timetable Title">
+                        <i class="fa-solid fa-pen text-xs text-slate-300 no-print"></i>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-4 mt-1 text-xs text-slate-500">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-regular fa-user text-indigo-500"></i>
+                            <input type="text" id="scheduleSubtitleInput" oninput="saveHeaderMeta()" value="Dr. / Student Name • Dept. of Computer Science" 
+                                class="bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-600 focus:outline-none text-slate-600 font-medium px-1 -ml-1 rounded"
+                                title="Click to edit Owner / Department">
+                        </div>
+                        <span class="text-slate-300">•</span>
+                        <span id="headerTimeRangeBadge" class="font-medium text-slate-600">08:00 - 17:00 (60m slots)</span>
+                    </div>
+                </div>
+
+                <!-- Mini Legend for Print/Export -->
+                <div id="exportLegendContainer" class="flex flex-wrap items-center gap-2">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Interactive 2D Timetable Grid -->
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse table-fixed min-w-[850px]" id="timetableGrid">
+                    <thead>
+                        <tr id="timetableHeaderRow" class="bg-slate-900 text-white">
+                            <!-- Populated by JS -->
+                        </tr>
+                    </thead>
+                    <tbody id="timetableBody" class="divide-y divide-slate-200">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer Summary inside Printable Area -->
+            <div class="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
+                <div id="printableSummaryLine" class="font-medium text-slate-600">
+                    <!-- Dynamic summary line -->
+                </div>
+                <div>Generated with Chronos Academic Timetable & Smart Slot Planner</div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Add / Edit Activity Modal -->
+    <div id="activityModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-fadeIn">
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-calendar-plus text-indigo-400 text-lg"></i>
+                    <h3 id="modalHeaderTitle" class="text-base font-bold">Assign Academic or Relax Slot</h3>
+                </div>
+                <button onclick="closeActivityModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="activityForm" onsubmit="saveActivityFromModal(event)" class="p-6 space-y-4">
+                <input type="hidden" id="editingActivityId" value="">
+
+                <!-- Quick Preset Suggestions for Fast Entry -->
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Quick Fill Presets</label>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="applyQuickPreset('Deep Study Session', 'cat_study')" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">📚 Study Time</button>
+                        <button type="button" onclick="applyQuickPreset('Research & Literature', 'cat_research')" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">🔬 Research</button>
+                        <button type="button" onclick="applyQuickPreset('Course Revision', 'cat_revision')" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">📝 Revision</button>
+                        <button type="button" onclick="applyQuickPreset('Quiet Reading / Focus', 'cat_quiet')" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">🤫 Quiet Time</button>
+                        <button type="button" onclick="applyQuickPreset('Walk / Coffee / Relax', 'cat_relax')" class="text-xs bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">🌿 Relax Time</button>
+                        <button type="button" onclick="applyQuickPreset('Lunch Break', 'cat_lunch')" class="text-xs bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">🍱 Lunch</button>
+                        <button type="button" onclick="applyQuickPreset('Free Slot', 'cat_free')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-md font-medium transition">✨ Free Slot</button>
+                    </div>
+                </div>
+
+                <!-- Activity Title & Category -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                    <div class="sm:col-span-7">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Activity Title / Subject Name *</label>
+                        <input type="text" id="actTitle" required placeholder="e.g., CS301 Algorithms, Quiet Study..." 
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div class="sm:col-span-5">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Category *</label>
+                        <select id="actCategory" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Days Selection (Multi-day check for new or recurring slots) -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Assign to Day(s) *</label>
+                    <div id="modalDaysCheckboxes" class="flex flex-wrap gap-1.5">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Start Time & End Time -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Start Time *</label>
+                        <select id="actStartTime" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">End Time * <span class="text-[11px] font-normal text-slate-400">(Multi-slot supported)</span></label>
+                        <select id="actEndTime" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Metadata: Location & Instructor/Notes -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Room / Lab / Location <span class="text-slate-400 font-normal">(Optional)</span></label>
+                        <input type="text" id="actLocation" placeholder="e.g., Room 402, Central Library" 
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Instructor / Batch / Notes <span class="text-slate-400 font-normal">(Optional)</span></label>
+                        <input type="text" id="actNotes" placeholder="e.g., Prof. Sharma, Ch. 4 Prep" 
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Modal Footer Actions -->
+                <div class="pt-4 border-t border-slate-200 flex items-center justify-between gap-3">
+                    <button type="button" id="btnDeleteActivity" onclick="deleteCurrentActivity()" class="hidden bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-xs px-4 py-2.5 rounded-lg transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i>
+                        Delete Block
+                    </button>
+                    <div class="flex items-center gap-2 ml-auto">
+                        <button type="button" onclick="closeActivityModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-4 py-2.5 rounded-lg transition">
+                            Cancel
+                        </button>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-5 py-2.5 rounded-lg shadow transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-check"></i>
+                            Save Slot
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal for Clearing Schedule -->
+    <div id="confirmClearModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-200">
+            <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4 text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">Clear Entire Timetable?</h3>
+            <p class="text-sm text-slate-500 mt-1 mb-6">This will remove all scheduled classes, study blocks, and free slots from your grid. Your custom categories and time settings will be preserved.</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeConfirmClearModal()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700">Cancel</button>
+                <button onclick="confirmClearAllActivities()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow">Yes, Clear Schedule</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Application JavaScript -->
+    <script>
+        /**************************************************************
+         * 1. STATE & DEFAULT CONFIGURATION
+         **************************************************************/
+        const STORAGE_KEY = 'chronos_academic_timetable_v1';
+        const ALL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        const DEFAULT_CATEGORIES = [
+            { id: 'cat_lecture', name: 'Lectures', color: '#4f46e5', isBreak: false, isFree: false },
+            { id: 'cat_lab', name: 'Practicals / Labs', color: '#0284c7', isBreak: false, isFree: false },
+            { id: 'cat_research', name: 'Research Time', color: '#7c3aed', isBreak: false, isFree: false },
+            { id: 'cat_study', name: 'Study Time', color: '#2563eb', isBreak: false, isFree: false },
+            { id: 'cat_revision', name: 'Revision Time', color: '#0d9488', isBreak: false, isFree: false },
+            { id: 'cat_quiet', name: 'Quiet Time', color: '#475569', isBreak: false, isFree: false },
+            { id: 'cat_relax', name: 'Relax Time', color: '#16a34a', isBreak: true, isFree: false },
+            { id: 'cat_lunch', name: 'Lunch Break', color: '#d97706', isBreak: true, isFree: false },
+            { id: 'cat_free', name: 'Free Slot', color: '#64748b', isBreak: false, isFree: true }
+        ];
+
+        let appState = {
+            meta: {
+                title: 'Fall Semester — Academic & Research Timetable',
+                subtitle: 'Faculty / Student Schedule • Smart Slot Planner'
+            },
+            config: {
+                activeDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+                dayStart: '08:00',
+                dayEnd: '17:00',
+                slotDuration: 60, // in minutes
+                lunchStart: '13:00',
+                lunchEnd: '14:00'
+            },
+            categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)),
+            activities: [] // { id, day, startTime, endTime, title, categoryId, location, notes }
+        };
+
+        /**************************************************************
+         * 2. TIME HELPER UTILITIES
+         **************************************************************/
+        function timeToMinutes(tStr) {
+            if (!tStr) return 0;
+            const [h, m] = tStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function minutesToTime(mins) {
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function formatTime12h(tStr) {
+            const mins = timeToMinutes(tStr);
+            let h = Math.floor(mins / 60);
+            const m = mins % 60;
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12;
+            if (h === 0) h = 12;
+            return `${h}:${String(m).padStart(2, '0')} ${ampm}`;
+        }
+
+        function formatHoursDisplay(minutes) {
+            const hrs = minutes / 60;
+            return Number.isInteger(hrs) ? `${hrs}h` : `${hrs.toFixed(1)}h`;
+        }
+
+        // Generates the array of time slots based on current config
+        function generateTimeSlots() {
+            const startMins = timeToMinutes(appState.config.dayStart);
+            const endMins = timeToMinutes(appState.config.dayEnd);
+            const step = parseInt(appState.config.slotDuration, 10) || 60;
+            const slots = [];
+            for (let t = startMins; t < endMins; t += step) {
+                const slotEnd = Math.min(t + step, endMins);
+                slots.push({
+                    start: minutesToTime(t),
+                    end: minutesToTime(slotEnd),
+                    startMins: t,
+                    endMins: slotEnd,
+                    duration: slotEnd - t
+                });
+            }
+            return slots;
+        }
+
+        // Convert hex color to soft pastel background + dark border
+        function hexToRGBA(hex, alpha = 0.14) {
+            let c = hex.replace('#', '');
+            if (c.length === 3) c = c.split('').map(x => x + x).join('');
+            const num = parseInt(c, 16);
+            const r = (num >> 16) & 255;
+            const g = (num >> 8) & 255;
+            const b = num & 255;
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        /**************************************************************
+         * 3. INITIALIZATION & STORAGE PERSISTENCE
+         **************************************************************/
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            initConfigPanelUI();
+            renderAll();
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', (e) => {
+                const container = document.getElementById('exportDropdownContainer');
+                const menu = document.getElementById('exportMenu');
+                if (container && !container.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            });
+        });
+
+        function saveToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('Failed to save state to localStorage:', e);
+            }
+        }
+
+        function loadFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && parsed.config && parsed.categories && Array.isArray(parsed.activities)) {
+                        appState = parsed;
+                        // Ensure Free Slot and Lunch Break categories always exist
+                        if (!appState.categories.some(c => c.id === 'cat_free')) {
+                            appState.categories.push({ id: 'cat_free', name: 'Free Slot', color: '#64748b', isBreak: false, isFree: true });
+                        }
+                        if (!appState.categories.some(c => c.id === 'cat_lunch')) {
+                            appState.categories.push({ id: 'cat_lunch', name: 'Lunch Break', color: '#d97706', isBreak: true, isFree: false });
+                        }
+                        return;
+                    }
+                }
+                // First time visitor: Load sample schedule so the app looks rich and intuitive immediately
+                populateInitialSampleData();
+            } catch (e) {
+                console.error('Error loading from storage:', e);
+                populateInitialSampleData();
+            }
+        }
+
+        function populateInitialSampleData() {
+            appState.config = {
+                activeDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+                dayStart: '08:00',
+                dayEnd: '17:00',
+                slotDuration: 60,
+                lunchStart: '13:00',
+                lunchEnd: '14:00'
+            };
+            appState.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+            appState.activities = [
+                // Lectures
+                { id: 'samp_1', day: 'Monday', startTime: '09:00', endTime: '11:00', title: 'CS301: Data Structures & Algorithms', categoryId: 'cat_lecture', location: 'Lecture Hall B', notes: 'Core Batch A' },
+                { id: 'samp_2', day: 'Wednesday', startTime: '09:00', endTime: '11:00', title: 'CS301: Data Structures & Algorithms', categoryId: 'cat_lecture', location: 'Lecture Hall B', notes: 'Core Batch A' },
+                { id: 'samp_3', day: 'Tuesday', startTime: '10:00', endTime: '12:00', title: 'MA204: Linear Algebra & Optimization', categoryId: 'cat_lecture', location: 'Room 204', notes: 'Prof. Verma' },
+                { id: 'samp_4', day: 'Thursday', startTime: '10:00', endTime: '12:00', title: 'MA204: Linear Algebra & Optimization', categoryId: 'cat_lecture', location: 'Room 204', notes: 'Prof. Verma' },
+                // Labs
+                { id: 'samp_5', day: 'Tuesday', startTime: '14:00', endTime: '17:00', title: 'Systems Programming Lab', categoryId: 'cat_lab', location: 'Comp Lab 3', notes: 'Practical Session' },
+                { id: 'samp_6', day: 'Friday', startTime: '14:00', endTime: '16:00', title: 'AI & Machine Learning Seminar', categoryId: 'cat_research', location: 'Seminar Room 1', notes: 'Paper Reading Group' },
+                // Study, Quiet, Revision, Relax
+                { id: 'samp_7', day: 'Monday', startTime: '11:00', endTime: '13:00', title: 'Deep Study: Problem Sets', categoryId: 'cat_study', location: 'Central Library', notes: 'No phone zone' },
+                { id: 'samp_8', day: 'Wednesday', startTime: '14:00', endTime: '16:00', title: 'Thesis Literature Review', categoryId: 'cat_research', location: 'Research Cubicle', notes: 'Drafting section 2' },
+                { id: 'samp_9', day: 'Thursday', startTime: '14:00', endTime: '15:00', title: 'Quiet Reading & Journaling', categoryId: 'cat_quiet', location: 'Reading Room', notes: 'Mental clarity' },
+                { id: 'samp_10', day: 'Friday', startTime: '09:00', endTime: '11:00', title: 'Weekly Concept Revision', categoryId: 'cat_revision', location: 'Study Desk', notes: 'Review Mon-Thu notes' },
+                { id: 'samp_11', day: 'Saturday', startTime: '09:00', endTime: '12:00', title: 'Research Project & Coding', categoryId: 'cat_research', location: 'Innovation Lab', notes: 'Prototype sprint' },
+                { id: 'samp_12', day: 'Monday', startTime: '16:00', endTime: '17:00', title: 'Campus Walk & Coffee', categoryId: 'cat_relax', location: 'Botanical Trail', notes: 'Unwind' },
+                { id: 'samp_13', day: 'Thursday', startTime: '16:00', endTime: '17:00', title: 'Badminton / Gym Session', categoryId: 'cat_relax', location: 'Sports Complex', notes: 'Cardio' }
+            ];
+
+            // Add Lunch across all active days
+            appState.config.activeDays.forEach((day, idx) => {
+                appState.activities.push({
+                    id: 'samp_lunch_' + idx,
+                    day: day,
+                    startTime: '13:00',
+                    endTime: '14:00',
+                    title: 'Lunch Break',
+                    categoryId: 'cat_lunch',
+                    location: 'Dining Hall',
+                    notes: '30m+ Mandatory Rest'
+                });
+            });
+
+            saveToStorage();
+        }
+
+        /**************************************************************
+         * 4. RENDER PIPELINE (GRID, ANALYTICS, CATEGORIES)
+         **************************************************************/
+        function renderAll() {
+            document.getElementById('scheduleTitleInput').value = appState.meta.title || 'Academic Timetable';
+            document.getElementById('scheduleSubtitleInput').value = appState.meta.subtitle || '';
+            document.getElementById('headerTimeRangeBadge').textContent = 
+                `${formatTime12h(appState.config.dayStart)} – ${formatTime12h(appState.config.dayEnd)} (${appState.config.slotDuration}m grid)`;
+
+            renderCategoryManager();
+            renderTimetableGrid();
+            renderAnalyticsAndLegend();
+            saveToStorage();
+        }
+
+        function saveHeaderMeta() {
+            appState.meta.title = document.getElementById('scheduleTitleInput').value;
+            appState.meta.subtitle = document.getElementById('scheduleSubtitleInput').value;
+            saveToStorage();
+        }
+
+        // Render Configuration Panel Inputs
+        function initConfigPanelUI() {
+            const daysContainer = document.getElementById('daysCheckboxContainer');
+            daysContainer.innerHTML = '';
+            ALL_DAYS.forEach(day => {
+                const checked = appState.config.activeDays.includes(day);
+                const label = document.createElement('label');
+                label.className = `px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5 ${
+                    checked ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+                }`;
+                label.innerHTML = `
+                    <input type="checkbox" value="${day}" ${checked ? 'checked' : ''} class="hidden" onchange="toggleDayCheckbox(this)">
+                    <span>${day.slice(0, 3)}</span>
+                `;
+                daysContainer.appendChild(label);
+            });
+
+            document.getElementById('cfgStartTime').value = appState.config.dayStart;
+            document.getElementById('cfgEndTime').value = appState.config.dayEnd;
+            document.getElementById('cfgLunchStart').value = appState.config.lunchStart || '13:00';
+            document.getElementById('cfgLunchEnd').value = appState.config.lunchEnd || '14:00';
+
+            const presetSelect = document.getElementById('cfgSlotPreset');
+            const customInput = document.getElementById('cfgCustomSlot');
+            const durStr = String(appState.config.slotDuration);
+            if (['15', '30', '45', '60'].includes(durStr)) {
+                presetSelect.value = durStr;
+                customInput.classList.add('hidden');
+            } else {
+                presetSelect.value = 'custom';
+                customInput.value = durStr;
+                customInput.classList.remove('hidden');
+            }
+        }
+
+        function toggleDayCheckbox(checkbox) {
+            initConfigPanelUI_SyncCheckboxStyles();
+        }
+
+        function initConfigPanelUI_SyncCheckboxStyles() {
+            const container = document.getElementById('daysCheckboxContainer');
+            Array.from(container.querySelectorAll('label')).forEach(lbl => {
+                const cb = lbl.querySelector('input');
+                if (cb.checked) {
+                    lbl.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5 bg-indigo-600 text-white border-indigo-600 shadow-xs';
+                } else {
+                    lbl.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5 bg-white text-slate-600 border-slate-300 hover:bg-slate-100';
+                }
+            });
+        }
+
+        function handleSlotPresetChange() {
+            const preset = document.getElementById('cfgSlotPreset').value;
+            const customInput = document.getElementById('cfgCustomSlot');
+            if (preset === 'custom') {
+                customInput.classList.remove('hidden');
+                customInput.value = appState.config.slotDuration || 40;
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+            }
+        }
+
+        function applyGridConfig() {
+            const checkedDays = Array.from(document.querySelectorAll('#daysCheckboxContainer input:checked')).map(cb => cb.value);
+            if (checkedDays.length === 0) {
+                showToast('Please select at least one active day of the week.', 'error');
+                return;
+            }
+
+            const startVal = document.getElementById('cfgStartTime').value;
+            const endVal = document.getElementById('cfgEndTime').value;
+            if (timeToMinutes(endVal) <= timeToMinutes(startVal) + 30) {
+                showToast('Daily End Time must be at least 30 minutes after Daily Start Time.', 'error');
+                return;
+            }
+
+            const preset = document.getElementById('cfgSlotPreset').value;
+            let slotMins = preset === 'custom' 
+                ? parseInt(document.getElementById('cfgCustomSlot').value, 10) 
+                : parseInt(preset, 10);
+
+            if (isNaN(slotMins) || slotMins < 10 || slotMins > 240) {
+                showToast('Slot interval must be between 10 and 240 minutes.', 'error');
+                return;
+            }
+
+            appState.config.activeDays = ALL_DAYS.filter(d => checkedDays.includes(d));
+            appState.config.dayStart = startVal;
+            appState.config.dayEnd = endVal;
+            appState.config.slotDuration = slotMins;
+
+            // Prune or clip activities that fall outside new start/end boundaries
+            const minBound = timeToMinutes(startVal);
+            const maxBound = timeToMinutes(endVal);
+            appState.activities = appState.activities.filter(act => {
+                const s = timeToMinutes(act.startTime);
+                const e = timeToMinutes(act.endTime);
+                return e > minBound && s < maxBound;
+            }).map(act => {
+                const s = Math.max(minBound, timeToMinutes(act.startTime));
+                const e = Math.min(maxBound, timeToMinutes(act.endTime));
+                return { ...act, startTime: minutesToTime(s), endTime: minutesToTime(e) };
+            });
+
+            renderAll();
+            showToast('Timetable grid & granularity updated!', 'success');
+        }
+
+        /**************************************************************
+         * 5. MANDATORY DAILY LUNCH BREAK LOGIC (MIN 30 MINS)
+         **************************************************************/
+        function applyLunchToAllDays() {
+            const lunchStart = document.getElementById('cfgLunchStart').value;
+            const lunchEnd = document.getElementById('cfgLunchEnd').value;
+            const overwrite = document.getElementById('cfgLunchOverwrite').checked;
+
+            const sMins = timeToMinutes(lunchStart);
+            const eMins = timeToMinutes(lunchEnd);
+
+            if (eMins - sMins < 30) {
+                showToast('Mandatory Lunch Break must be at least 30 minutes long.', 'error');
+                return;
+            }
+
+            const dayStartMins = timeToMinutes(appState.config.dayStart);
+            const dayEndMins = timeToMinutes(appState.config.dayEnd);
+            if (sMins < dayStartMins || eMins > dayEndMins) {
+                showToast('Lunch window must fall within your Daily Start and End times.', 'error');
+                return;
+            }
+
+            appState.config.lunchStart = lunchStart;
+            appState.config.lunchEnd = lunchEnd;
+
+            let appliedCount = 0;
+            appState.config.activeDays.forEach(day => {
+                const overlapping = appState.activities.filter(a => {
+                    if (a.day !== day) return false;
+                    const aStart = timeToMinutes(a.startTime);
+                    const aEnd = timeToMinutes(a.endTime);
+                    return aStart < eMins && aEnd > sMins;
+                });
+
+                // Overwrite if user checked overwrite OR if the only overlapping block is a "Free Slot" or old "Lunch Break"
+                const onlyFreeOrLunch = overlapping.every(a => a.categoryId === 'cat_free' || a.categoryId === 'cat_lunch');
+
+                if (overlapping.length === 0 || overwrite || onlyFreeOrLunch) {
+                    // Remove or trim overlapping activities
+                    resolveActivityOverlaps(day, sMins, eMins);
+                    appState.activities.push({
+                        id: 'lunch_' + day + '_' + Date.now(),
+                        day: day,
+                        startTime: lunchStart,
+                        endTime: lunchEnd,
+                        title: 'Lunch Break',
+                        categoryId: 'cat_lunch',
+                        location: 'Dining / Break Area',
+                        notes: `${eMins - sMins}m Daily Break`
+                    });
+                    appliedCount++;
+                }
+            });
+
+            renderAll();
+            if (appliedCount > 0) {
+                showToast(`Lunch Break (${lunchStart}–${lunchEnd}) applied to ${appliedCount} day(s).`, 'success');
+            } else {
+                showToast('Lunch window had existing classes. Check "Overwrite" to replace them.', 'info');
+            }
+        }
+
+        /**************************************************************
+         * 6. USER-DEFINED CATEGORIES MANAGER
+         **************************************************************/
+        function getCategoryById(catId) {
+            return appState.categories.find(c => c.id === catId) || appState.categories[0];
+        }
+
+        function renderCategoryManager() {
+            const container = document.getElementById('categoryManagerList');
+            container.innerHTML = '';
+
+            appState.categories.forEach(cat => {
+                const isProtected = cat.id === 'cat_free' || cat.id === 'cat_lunch';
+                const badge = document.createElement('div');
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border shadow-2xs';
+                badge.style.backgroundColor = hexToRGBA(cat.color, 0.12);
+                badge.style.borderColor = hexToRGBA(cat.color, 0.4);
+                badge.style.color = cat.color;
+
+                badge.innerHTML = `
+                    <input type="color" value="${cat.color}" onchange="updateCategoryColor('${cat.id}', this.value)" class="w-3.5 h-3.5 rounded-full border-0 cursor-pointer bg-transparent p-0" title="Change color">
+                    <span>${escapeHtml(cat.name)}</span>
+                    ${!isProtected ? `<button onclick="deleteCategory('${cat.id}')" class="ml-1 hover:text-rose-600 transition" title="Delete category"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                `;
+                container.appendChild(badge);
+            });
+        }
+
+        function addNewCategory() {
+            const nameInput = document.getElementById('newCatName');
+            const colorInput = document.getElementById('newCatColor');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                showToast('Please enter a category name (e.g., Quiet Time, Mentoring).', 'error');
+                return;
+            }
+            if (appState.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                showToast('A category with that name already exists.', 'error');
+                return;
+            }
+
+            const lower = name.toLowerCase();
+            const isBreak = lower.includes('relax') || lower.includes('break') || lower.includes('lunch') || lower.includes('rest') || lower.includes('walk');
+
+            appState.categories.push({
+                id: 'cat_' + Date.now(),
+                name: name,
+                color: colorInput.value || '#6366f1',
+                isBreak: isBreak,
+                isFree: false
+            });
+
+            nameInput.value = '';
+            renderAll();
+            showToast(`Category "${name}" added!`, 'success');
+        }
+
+        function updateCategoryColor(catId, newColor) {
+            const cat = appState.categories.find(c => c.id === catId);
+            if (cat) {
+                cat.color = newColor;
+                renderAll();
+            }
+        }
+
+        function deleteCategory(catId) {
+            if (appState.categories.length <= 2) {
+                showToast('Keep at least two categories in your planner.', 'error');
+                return;
+            }
+            appState.categories = appState.categories.filter(c => c.id !== catId);
+            // Reassign any orphaned activities to Free Slot
+            appState.activities.forEach(a => {
+                if (a.categoryId === catId) a.categoryId = 'cat_free';
+            });
+            renderAll();
+            showToast('Category removed.', 'info');
+        }
+
+        /**************************************************************
+         * 7. SMART SLOT FINDER ("FILL EMPTY SLOTS AS FREE")
+         **************************************************************/
+        function autoFillFreeSlots() {
+            const slots = generateTimeSlots();
+            let createdBlocks = 0;
+            let totalFreeMinutesAdded = 0;
+
+            appState.config.activeDays.forEach(day => {
+                let currentFreeStart = null;
+                let currentFreeEnd = null;
+
+                slots.forEach(slot => {
+                    const isOccupied = appState.activities.some(act => {
+                        if (act.day !== day) return false;
+                        const aStart = timeToMinutes(act.startTime);
+                        const aEnd = timeToMinutes(act.endTime);
+                        return aStart < slot.endMins && aEnd > slot.startMins;
+                    });
+
+                    if (!isOccupied) {
+                        if (currentFreeStart === null) {
+                            currentFreeStart = slot.startMins;
+                            currentFreeEnd = slot.endMins;
+                        } else {
+                            currentFreeEnd = slot.endMins;
+                        }
+                    } else {
+                        if (currentFreeStart !== null) {
+                            appState.activities.push({
+                                id: `free_${day}_${currentFreeStart}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                                day: day,
+                                startTime: minutesToTime(currentFreeStart),
+                                endTime: minutesToTime(currentFreeEnd),
+                                title: 'Free Slot',
+                                categoryId: 'cat_free',
+                                location: 'Flexible / Unassigned',
+                                notes: 'Click to assign Study, Quiet, or Relax time'
+                            });
+                            createdBlocks++;
+                            totalFreeMinutesAdded += (currentFreeEnd - currentFreeStart);
+                            currentFreeStart = null;
+                            currentFreeEnd = null;
+                        }
+                    }
+                });
+
+                if (currentFreeStart !== null) {
+                    appState.activities.push({
+                        id: `free_${day}_${currentFreeStart}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                        day: day,
+                        startTime: minutesToTime(currentFreeStart),
+                        endTime: minutesToTime(currentFreeEnd),
+                        title: 'Free Slot',
+                        categoryId: 'cat_free',
+                        location: 'Flexible / Unassigned',
+                        notes: 'Click to assign Study, Quiet, or Relax time'
+                    });
+                    createdBlocks++;
+                    totalFreeMinutesAdded += (currentFreeEnd - currentFreeStart);
+                }
+            });
+
+            renderAll();
+            if (createdBlocks > 0) {
+                showToast(`Smart Slot Finder filled ${createdBlocks} gap(s) (${formatHoursDisplay(totalFreeMinutesAdded)} free time) ready to manage!`, 'success');
+            } else {
+                showToast('All slots are already assigned or marked as Free Slots!', 'info');
+            }
+        }
+
+        function clearOnlyFreeSlots() {
+            const before = appState.activities.length;
+            appState.activities = appState.activities.filter(a => a.categoryId !== 'cat_free');
+            const removed = before - appState.activities.length;
+            renderAll();
+            showToast(`Cleared ${removed} explicit "Free Slot" block(s) back to blank cells.`, 'info');
+        }
+
+        /**************************************************************
+         * 8. RENDER 2D INTERACTIVE TIMETABLE GRID
+         **************************************************************/
+        function renderTimetableGrid() {
+            const theadRow = document.getElementById('timetableHeaderRow');
+            const tbody = document.getElementById('timetableBody');
+            const activeDays = appState.config.activeDays;
+            const slots = generateTimeSlots();
+
+            // 1. Render Header Columns (Time + Active Days)
+            theadRow.innerHTML = `
+                <th class="w-28 sm:w-32 py-3.5 px-3 text-left text-xs font-bold uppercase tracking-wider text-slate-300 border-r border-slate-800">
+                    <i class="fa-regular fa-clock mr-1 text-indigo-400"></i> Time Slot
+                </th>
+            `;
+            activeDays.forEach(day => {
+                // Calculate free hours on this specific day for header badge
+                const dayFreeMins = calculateDayFreeMinutes(day, slots);
+                theadRow.innerHTML += `
+                    <th class="py-3 px-3 text-left border-r border-slate-800 last:border-r-0">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-bold tracking-wide text-white">${day}</span>
+                            <span class="text-[11px] font-medium px-2 py-0.5 rounded-full ${dayFreeMins > 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-300'}">
+                                ${formatHoursDisplay(dayFreeMins)} free
+                            </span>
+                        </div>
+                    </th>
+                `;
+            });
+
+            // 2. Render Time Slot Rows with Rowspan support for multi-slot activities
+            tbody.innerHTML = '';
+            const skipMatrix = {}; // key: `${day}_${rowIndex}`
+
+            slots.forEach((slot, rowIndex) => {
+                const tr = document.createElement('tr');
+                tr.className = 'group hover:bg-slate-50/60 transition';
+
+                // Time Column Cell
+                const timeTd = document.createElement('td');
+                timeTd.className = 'py-2.5 px-3 align-top bg-slate-50/90 border-r border-slate-200 text-xs font-semibold text-slate-600 select-none';
+                timeTd.innerHTML = `
+                    <div class="text-slate-800 font-bold">${slot.start}</div>
+                    <div class="text-[11px] text-slate-400">to ${slot.end}</div>
+                `;
+                tr.appendChild(timeTd);
+
+                // Day Cells
+                activeDays.forEach(day => {
+                    if (skipMatrix[`${day}_${rowIndex}`]) {
+                        return; // Covered by a rowspan from an earlier slot
+                    }
+
+                    // Find activity starting in or covering this slot
+                    const act = appState.activities.find(a => {
+                        if (a.day !== day) return false;
+                        const aStart = timeToMinutes(a.startTime);
+                        const aEnd = timeToMinutes(a.endTime);
+                        return aStart <= slot.startMins && aEnd > slot.startMins;
+                    });
+
+                    const td = document.createElement('td');
+                    td.className = 'p-1.5 border-r border-slate-200 last:border-r-0 align-top relative';
+
+                    if (act) {
+                        // Compute how many slot rows this activity spans
+                        let spanCount = 1;
+                        const actEndMins = timeToMinutes(act.endTime);
+                        for (let nextIdx = rowIndex + 1; nextIdx < slots.length; nextIdx++) {
+                            if (slots[nextIdx].startMins < actEndMins) {
+                                spanCount++;
+                                skipMatrix[`${day}_${nextIdx}`] = true;
+                            } else {
+                                break;
+                            }
+                        }
+                        if (spanCount > 1) {
+                            td.rowSpan = spanCount;
+                        }
+
+                        const cat = getCategoryById(act.categoryId);
+                        const isFreeBlock = cat.id === 'cat_free' || cat.isFree;
+                        const durationMins = timeToMinutes(act.endTime) - timeToMinutes(act.startTime);
+
+                        const card = document.createElement('div');
+                        card.onclick = () => openActivityModal({ activityId: act.id });
+                        card.className = `timetable-cell h-full min-h-[60px] w-full rounded-xl p-2.5 cursor-pointer flex flex-col justify-between border-l-4 shadow-2xs ${isFreeBlock ? 'free-slot-pattern border-dashed border' : ''}`;
+                        
+                        if (isFreeBlock) {
+                            card.style.backgroundColor = '#f8fafc';
+                            card.style.borderColor = '#94a3b8';
+                            card.style.borderLeftColor = '#10b981';
+                            card.style.borderLeftWidth = '4px';
+                        } else {
+                            card.style.backgroundColor = hexToRGBA(cat.color, 0.13);
+                            card.style.borderColor = hexToRGBA(cat.color, 0.3);
+                            card.style.borderLeftColor = cat.color;
+                        }
+
+                        card.innerHTML = `
+                            <div>
+                                <div class="flex items-start justify-between gap-1 mb-1">
+                                    <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                                          style="background-color: ${isFreeBlock ? '#d1fae5' : hexToRGBA(cat.color, 0.22)}; color: ${isFreeBlock ? '#047857' : cat.color}">
+                                        ${escapeHtml(cat.name)}
+                                    </span>
+                                    <span class="text-[10px] font-semibold text-slate-500 shrink-0">${formatHoursDisplay(durationMins)}</span>
+                                </div>
+                                <div class="font-bold text-xs sm:text-sm leading-snug ${isFreeBlock ? 'text-emerald-800' : 'text-slate-900'}">
+                                    ${escapeHtml(act.title)}
+                                </div>
+                                ${act.location ? `
+                                    <div class="text-[11px] text-slate-600 mt-1 flex items-center gap-1">
+                                        <i class="fa-solid fa-location-dot text-[10px] opacity-70"></i>
+                                        <span class="truncate">${escapeHtml(act.location)}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="mt-2 pt-1 border-t border-black/5 flex items-center justify-between text-[10px] text-slate-500">
+                                <span>${act.startTime} – ${act.endTime}</span>
+                                ${act.notes ? `<span class="truncate max-w-[110px] italic" title="${escapeHtml(act.notes)}">${escapeHtml(act.notes)}</span>` : ''}
+                            </div>
+                        `;
+                        td.appendChild(card);
+                    } else {
+                        // Empty Unassigned Slot
+                        const emptyBtn = document.createElement('button');
+                        emptyBtn.type = 'button';
+                        emptyBtn.onclick = () => openActivityModal({ day: day, startTime: slot.start, endTime: slot.end });
+                        emptyBtn.className = 'w-full h-full min-h-[60px] rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 transition flex flex-col items-center justify-center p-2 group/btn text-center';
+                        emptyBtn.innerHTML = `
+                            <span class="text-[11px] font-medium text-slate-400 group-hover/btn:text-indigo-600 transition flex items-center gap-1">
+                                <i class="fa-solid fa-plus text-[10px]"></i> Free (${slot.duration}m)
+                            </span>
+                            <span class="text-[10px] text-slate-300 group-hover/btn:text-indigo-400 hidden sm:inline">Click to assign</span>
+                        `;
+                        td.appendChild(emptyBtn);
+                    }
+
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function calculateDayFreeMinutes(day, slots) {
+            let freeMins = 0;
+            slots.forEach(slot => {
+                const act = appState.activities.find(a => {
+                    if (a.day !== day) return false;
+                    const aStart = timeToMinutes(a.startTime);
+                    const aEnd = timeToMinutes(a.endTime);
+                    return aStart < slot.endMins && aEnd > slot.startMins;
+                });
+                if (!act) {
+                    freeMins += slot.duration;
+                } else {
+                    const cat = getCategoryById(act.categoryId);
+                    if (cat.id === 'cat_free' || cat.isFree) {
+                        freeMins += slot.duration;
+                    }
+                }
+            });
+            return freeMins;
+        }
+
+        /**************************************************************
+         * 9. LIVE ANALYTICS & HOURS BREAKDOWN
+         **************************************************************/
+        function renderAnalyticsAndLegend() {
+            const slots = generateTimeSlots();
+            const dailyMins = timeToMinutes(appState.config.dayEnd) - timeToMinutes(appState.config.dayStart);
+            const totalCapacityMins = dailyMins * appState.config.activeDays.length;
+
+            // Tally minutes per category across active days
+            const categoryMinutes = {};
+            appState.categories.forEach(c => categoryMinutes[c.id] = 0);
+
+            let scheduledWorkMins = 0;
+            let breakAndRelaxMins = 0;
+            let explicitFreeSlotMins = 0;
+            let occupiedTotalMins = 0;
+
+            appState.activities.forEach(act => {
+                if (!appState.config.activeDays.includes(act.day)) return;
+                const dur = Math.max(0, timeToMinutes(act.endTime) - timeToMinutes(act.startTime));
+                const cat = getCategoryById(act.categoryId);
+                categoryMinutes[cat.id] = (categoryMinutes[cat.id] || 0) + dur;
+                occupiedTotalMins += dur;
+
+                if (cat.id === 'cat_free' || cat.isFree) {
+                    explicitFreeSlotMins += dur;
+                } else if (cat.isBreak || cat.id === 'cat_lunch' || cat.id === 'cat_relax') {
+                    breakAndRelaxMins += dur;
+                } else {
+                    scheduledWorkMins += dur;
+                }
+            });
+
+            const blankUnassignedMins = Math.max(0, totalCapacityMins - occupiedTotalMins);
+            const totalFreeAvailableMins = blankUnassignedMins + explicitFreeSlotMins;
+
+            // Update Top Stat Cards
+            document.getElementById('statTotalCapacity').textContent = formatHoursDisplay(totalCapacityMins);
+            document.getElementById('statGridSummary').textContent = `${appState.config.activeDays.length} days × ${formatHoursDisplay(dailyMins)}/day`;
+            document.getElementById('statScheduledHours').textContent = formatHoursDisplay(scheduledWorkMins);
+            document.getElementById('statFreeHours').textContent = formatHoursDisplay(totalFreeAvailableMins);
+            document.getElementById('statFreeSlotsCount').textContent = `${formatHoursDisplay(explicitFreeSlotMins)} marked Free + ${formatHoursDisplay(blankUnassignedMins)} blank`;
+            document.getElementById('statBreakHours').textContent = formatHoursDisplay(breakAndRelaxMins);
+
+            // Render Progress Bar & Category Pills
+            const progressBar = document.getElementById('categoryProgressBar');
+            const pillsContainer = document.getElementById('categoryStatsPills');
+            const legendContainer = document.getElementById('exportLegendContainer');
+            progressBar.innerHTML = '';
+            pillsContainer.innerHTML = '';
+            legendContainer.innerHTML = '';
+
+            appState.categories.forEach(cat => {
+                let mins = categoryMinutes[cat.id] || 0;
+                if (cat.id === 'cat_free') {
+                    mins = totalFreeAvailableMins; // Combine blank gaps + Free Slot blocks for clear visibility
+                }
+                if (mins <= 0) return;
+
+                const pct = totalCapacityMins > 0 ? ((mins / totalCapacityMins) * 100).toFixed(1) : 0;
+
+                // Progress bar segment
+                const seg = document.createElement('div');
+                seg.style.width = `${pct}%`;
+                seg.style.backgroundColor = cat.id === 'cat_free' ? '#10b981' : cat.color;
+                seg.title = `${cat.name}: ${formatHoursDisplay(mins)} (${pct}%)`;
+                progressBar.appendChild(seg);
+
+                // Stat Pill
+                const pill = document.createElement('div');
+                pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-50 border border-slate-200';
+                pill.innerHTML = `
+                    <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${cat.id === 'cat_free' ? '#10b981' : cat.color}"></span>
+                    <span class="text-slate-700 font-semibold">${escapeHtml(cat.name)}:</span>
+                    <span class="text-slate-900 font-bold">${formatHoursDisplay(mins)}</span>
+                    <span class="text-[10px] text-slate-400">(${pct}%)</span>
+                `;
+                pillsContainer.appendChild(pill);
+
+                // Mini Print Legend
+                const leg = document.createElement('span');
+                leg.className = 'inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded';
+                leg.innerHTML = `<span class="w-2 h-2 rounded-full" style="background-color: ${cat.id === 'cat_free' ? '#10b981' : cat.color}"></span> ${escapeHtml(cat.name)} (${formatHoursDisplay(mins)})`;
+                legendContainer.appendChild(leg);
+            });
+
+            // Printable bottom summary line
+            document.getElementById('printableSummaryLine').textContent = 
+                `Weekly Summary: ${formatHoursDisplay(scheduledWorkMins)} Academic/Study • ${formatHoursDisplay(breakAndRelaxMins)} Lunch & Relax • ${formatHoursDisplay(totalFreeAvailableMins)} Free/Flexible Time Available`;
+        }
+
+        /**************************************************************
+         * 10. ADD / EDIT / SPLIT / DELETE ACTIVITY MODAL
+         **************************************************************/
+        function openActivityModal(options = {}) {
+            const modal = document.getElementById('activityModal');
+            const editingIdInput = document.getElementById('editingActivityId');
+            const deleteBtn = document.getElementById('btnDeleteActivity');
+            const modalTitle = document.getElementById('modalHeaderTitle');
+
+            // Populate Category Dropdown
+            const catSelect = document.getElementById('actCategory');
+            catSelect.innerHTML = '';
+            appState.categories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                catSelect.appendChild(opt);
+            });
+
+            // Populate Start/End Time Dropdowns snapped to grid (plus 15m granularity flexibility)
+            populateModalTimeSelects();
+
+            // Populate Days checkboxes inside modal
+            const daysContainer = document.getElementById('modalDaysCheckboxes');
+            daysContainer.innerHTML = '';
+
+            let existingActivity = null;
+            if (options.activityId) {
+                existingActivity = appState.activities.find(a => a.id === options.activityId);
+            }
+
+            const targetDay = existingActivity ? existingActivity.day : (options.day || appState.config.activeDays[0]);
+
+            appState.config.activeDays.forEach(day => {
+                const isChecked = day === targetDay;
+                const lbl = document.createElement('label');
+                lbl.className = `px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5`;
+                lbl.innerHTML = `
+                    <input type="checkbox" name="modalDayCb" value="${day}" ${isChecked ? 'checked' : ''} class="hidden" onchange="syncModalDayPills()">
+                    <span>${day.slice(0, 3)}</span>
+                `;
+                daysContainer.appendChild(lbl);
+            });
+            syncModalDayPills();
+
+            if (existingActivity) {
+                editingIdInput.value = existingActivity.id;
+                modalTitle.textContent = existingActivity.categoryId === 'cat_free' 
+                    ? 'Convert Free Slot to Activity' 
+                    : 'Edit Scheduled Slot';
+                document.getElementById('actTitle').value = existingActivity.categoryId === 'cat_free' ? '' : existingActivity.title;
+                document.getElementById('actTitle').placeholder = existingActivity.categoryId === 'cat_free' ? 'Enter Study, Quiet Time, Lecture...' : '';
+                document.getElementById('actCategory').value = existingActivity.categoryId === 'cat_free' ? 'cat_study' : existingActivity.categoryId;
+                document.getElementById('actStartTime').value = existingActivity.startTime;
+                document.getElementById('actEndTime').value = existingActivity.endTime;
+                document.getElementById('actLocation').value = existingActivity.location === 'Flexible / Unassigned' ? '' : (existingActivity.location || '');
+                document.getElementById('actNotes').value = existingActivity.notes === 'Click to assign Study, Quiet, or Relax time' ? '' : (existingActivity.notes || '');
+                deleteBtn.classList.remove('hidden');
+            } else {
+                editingIdInput.value = '';
+                modalTitle.textContent = 'Assign New Academic or Relax Slot';
+                document.getElementById('actTitle').value = '';
+                document.getElementById('actCategory').value = 'cat_lecture';
+                const defaultStart = options.startTime || appState.config.dayStart;
+                const defaultEnd = options.endTime || minutesToTime(Math.min(timeToMinutes(defaultStart) + appState.config.slotDuration, timeToMinutes(appState.config.dayEnd)));
+                document.getElementById('actStartTime').value = defaultStart;
+                document.getElementById('actEndTime').value = defaultEnd;
+                document.getElementById('actLocation').value = '';
+                document.getElementById('actNotes').value = '';
+                deleteBtn.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('actTitle').focus(), 50);
+        }
+
+        function syncModalDayPills() {
+            const container = document.getElementById('modalDaysCheckboxes');
+            Array.from(container.querySelectorAll('label')).forEach(lbl => {
+                const cb = lbl.querySelector('input');
+                if (cb.checked) {
+                    lbl.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5 bg-indigo-600 text-white border-indigo-600 shadow-xs';
+                } else {
+                    lbl.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5 bg-slate-50 text-slate-600 border-slate-300 hover:bg-slate-100';
+                }
+            });
+        }
+
+        function populateModalTimeSelects() {
+            const startSelect = document.getElementById('actStartTime');
+            const endSelect = document.getElementById('actEndTime');
+            startSelect.innerHTML = '';
+            endSelect.innerHTML = '';
+
+            const slots = generateTimeSlots();
+            const timePoints = new Set();
+            slots.forEach(s => {
+                timePoints.add(s.start);
+                timePoints.add(s.end);
+            });
+            const sortedTimes = Array.from(timePoints).sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
+
+            sortedTimes.forEach((t, idx) => {
+                if (idx < sortedTimes.length - 1) {
+                    const optS = document.createElement('option');
+                    optS.value = t;
+                    optS.textContent = `${t} (${formatTime12h(t)})`;
+                    startSelect.appendChild(optS);
+                }
+                if (idx > 0) {
+                    const optE = document.createElement('option');
+                    optE.value = t;
+                    optE.textContent = `${t} (${formatTime12h(t)})`;
+                    endSelect.appendChild(optE);
+                }
+            });
+        }
+
+        function applyQuickPreset(title, catId) {
+            document.getElementById('actTitle').value = title;
+            if (appState.categories.some(c => c.id === catId)) {
+                document.getElementById('actCategory').value = catId;
+            }
+        }
+
+        function closeActivityModal() {
+            document.getElementById('activityModal').classList.add('hidden');
+        }
+
+        // Smart overlap resolution: splits or trims any existing block (like a multi-hour Free Slot) when assigning a sub-block
+        function resolveActivityOverlaps(day, newStartMins, newEndMins, ignoreId = null) {
+            const updatedActivities = [];
+
+            appState.activities.forEach(act => {
+                if (act.id === ignoreId) return;
+                if (act.day !== day) {
+                    updatedActivities.push(act);
+                    return;
+                }
+
+                const aStart = timeToMinutes(act.startTime);
+                const aEnd = timeToMinutes(act.endTime);
+
+                // No overlap
+                if (aEnd <= newStartMins || aStart >= newEndMins) {
+                    updatedActivities.push(act);
+                    return;
+                }
+
+                // If existing block extends before the new block, keep the leading portion
+                if (aStart < newStartMins) {
+                    updatedActivities.push({
+                        ...act,
+                        id: act.id + '_lead_' + Math.random().toString(36).slice(2, 5),
+                        endTime: minutesToTime(newStartMins)
+                    });
+                }
+
+                // If existing block extends after the new block, keep the trailing portion
+                if (aEnd > newEndMins) {
+                    updatedActivities.push({
+                        ...act,
+                        id: act.id + '_trail_' + Math.random().toString(36).slice(2, 5),
+                        startTime: minutesToTime(newEndMins)
+                    });
+                }
+            });
+
+            appState.activities = updatedActivities;
+        }
+
+        function saveActivityFromModal(e) {
+            e.preventDefault();
+            const editingId = document.getElementById('editingActivityId').value;
+            const title = document.getElementById('actTitle').value.trim();
+            const categoryId = document.getElementById('actCategory').value;
+            const startTime = document.getElementById('actStartTime').value;
+            const endTime = document.getElementById('actEndTime').value;
+            const location = document.getElementById('actLocation').value.trim();
+            const notes = document.getElementById('actNotes').value.trim();
+
+            const selectedDays = Array.from(document.querySelectorAll('input[name="modalDayCb"]:checked')).map(cb => cb.value);
+            if (selectedDays.length === 0) {
+                showToast('Please select at least one day.', 'error');
+                return;
+            }
+
+            const sMins = timeToMinutes(startTime);
+            const eMins = timeToMinutes(endTime);
+            if (eMins <= sMins) {
+                showToast('End Time must be after Start Time.', 'error');
+                return;
+            }
+
+            // Enforce minimum 30 minutes if category is Lunch Break
+            if (categoryId === 'cat_lunch' && (eMins - sMins) < 30) {
+                showToast('Lunch Break requires a minimum of 30 minutes.', 'error');
+                return;
+            }
+
+            // If editing an existing activity, remove its original entry first
+            if (editingId) {
+                appState.activities = appState.activities.filter(a => a.id !== editingId);
+            }
+
+            selectedDays.forEach(day => {
+                resolveActivityOverlaps(day, sMins, eMins);
+                appState.activities.push({
+                    id: 'act_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                    day: day,
+                    startTime: startTime,
+                    endTime: endTime,
+                    title: title,
+                    categoryId: categoryId,
+                    location: location,
+                    notes: notes
+                });
+            });
+
+            closeActivityModal();
+            renderAll();
+            showToast(`Saved "${title}" to ${selectedDays.join(', ')}!`, 'success');
+        }
+
+        function deleteCurrentActivity() {
+            const editingId = document.getElementById('editingActivityId').value;
+            if (!editingId) return;
+            appState.activities = appState.activities.filter(a => a.id !== editingId);
+            closeActivityModal();
+            renderAll();
+            showToast('Slot removed.', 'info');
+        }
+
+        /**************************************************************
+         * 11. EXPORT & PERSISTENCE (EXCEL 2D GRID, PDF, PNG, JSON)
+         **************************************************************/
+        function toggleExportMenu() {
+            const menu = document.getElementById('exportMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        function toggleConfigDrawer() {
+            const drawer = document.getElementById('configDrawer');
+            drawer.classList.toggle('hidden');
+        }
+
+        // 11A. 2D Visual Weekly Grid Excel Export (.xlsx) using SheetJS
+        function exportToExcel() {
+            document.getElementById('exportMenu').classList.add('hidden');
+            try {
+                const slots = generateTimeSlots();
+                const activeDays = appState.config.activeDays;
+
+                // Sheet 1: 2D Visual Timetable Grid
+                const aoa = [];
+                aoa.push([appState.meta.title || 'Academic Timetable']);
+                aoa.push([appState.meta.subtitle || '', `Generated: ${new Date().toLocaleDateString()}`]);
+                aoa.push([]); // Blank separator row
+
+                // Header Row
+                aoa.push(['Time Slot', ...activeDays]);
+
+                // Time Rows
+                slots.forEach(slot => {
+                    const row = [`${slot.start} - ${slot.end}`];
+                    activeDays.forEach(day => {
+                        const act = appState.activities.find(a => {
+                            if (a.day !== day) return false;
+                            const aStart = timeToMinutes(a.startTime);
+                            const aEnd = timeToMinutes(a.endTime);
+                            return aStart <= slot.startMins && aEnd > slot.startMins;
+                        });
+
+                        if (act) {
+                            const cat = getCategoryById(act.categoryId);
+                            let cellText = `${act.title} [${cat.name}]`;
+                            if (act.location) cellText += ` @ ${act.location}`;
+                            if (act.notes) cellText += ` (${act.notes})`;
+                            row.push(cellText);
+                        } else {
+                            row.push('FREE SLOT');
+                        }
+                    });
+                    aoa.push(row);
+                });
+
+                aoa.push([]);
+                aoa.push(['CATEGORY ANALYTICS & HOURS SUMMARY']);
+                aoa.push(['Category Name', 'Total Weekly Hours', 'Total Minutes']);
+
+                // Calculate summary for Excel
+                const dailyMins = timeToMinutes(appState.config.dayEnd) - timeToMinutes(appState.config.dayStart);
+                const totalCapacityMins = dailyMins * activeDays.length;
+                let occupiedMins = 0;
+
+                appState.categories.forEach(cat => {
+                    if (cat.id === 'cat_free') return;
+                    let mins = 0;
+                    appState.activities.forEach(a => {
+                        if (activeDays.includes(a.day) && a.categoryId === cat.id) {
+                            mins += (timeToMinutes(a.endTime) - timeToMinutes(a.startTime));
+                        }
+                    });
+                    occupiedMins += mins;
+                    aoa.push([cat.name, +(mins / 60).toFixed(2), mins]);
+                });
+
+                const freeMins = Math.max(0, totalCapacityMins - occupiedMins);
+                aoa.push(['Free / Unassigned Time Available', +(freeMins / 60).toFixed(2), freeMins]);
+                aoa.push(['Total Weekly Grid Capacity', +(totalCapacityMins / 60).toFixed(2), totalCapacityMins]);
+
+                const wb = XLSX.utils.book_new();
+                const wsGrid = XLSX.utils.aoa_to_sheet(aoa);
+
+                // Set generous column widths for readability
+                wsGrid['!cols'] = [{ wch: 18 }, ...activeDays.map(() => ({ wch: 30 }))];
+
+                XLSX.utils.book_append_sheet(wb, wsGrid, 'Weekly Timetable 2D');
+                XLSX.writeFile(wb, 'Academic_Timetable_Schedule.xlsx');
+                showToast('Excel 2D Timetable (.xlsx) downloaded!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Excel export failed. Please try again.', 'error');
+            }
+        }
+
+        // 11B. High-Res PNG Image Export
+        async function exportToPNG() {
+            document.getElementById('exportMenu').classList.add('hidden');
+            showToast('Rendering high-resolution timetable image...', 'info');
+            try {
+                const element = document.getElementById('printableTimetableArea');
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
+                const link = document.createElement('a');
+                link.download = 'Academic_Timetable.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('PNG Image downloaded!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Failed to generate PNG image.', 'error');
+            }
+        }
+
+        // 11C. Print-Ready Landscape PDF Export
+        async function exportToPDF() {
+            document.getElementById('exportMenu').classList.add('hidden');
+            showToast('Generating landscape PDF document...', 'info');
+            try {
+                const element = document.getElementById('printableTimetableArea');
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                });
+                const imgData = canvas.toDataURL('image/png');
+                const jspdfLib = window.jspdf || window.jsPDF;
+                const jsPDFConstructor = jspdfLib && jspdfLib.jsPDF ? jspdfLib.jsPDF : jspdfLib;
+                if (!jsPDFConstructor) {
+                    throw new Error('jsPDF library not loaded yet.');
+                }
+                const pdf = new jsPDFConstructor('l', 'mm', 'a4');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const margin = 8;
+
+                const availW = pageWidth - margin * 2;
+                const availH = pageHeight - margin * 2;
+
+                const imgProps = pdf.getImageProperties(imgData);
+                let renderW = availW;
+                let renderH = (imgProps.height * renderW) / imgProps.width;
+
+                if (renderH > availH) {
+                    renderH = availH;
+                    renderW = (imgProps.width * renderH) / imgProps.height;
+                }
+
+                const xOffset = (pageWidth - renderW) / 2;
+                const yOffset = (pageHeight - renderH) / 2;
+
+                pdf.addImage(imgData, 'PNG', xOffset, yOffset, renderW, renderH);
+                pdf.save('Academic_Timetable_Schedule.pdf');
+                showToast('Landscape PDF downloaded!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('PDF export encountered an error.', 'error');
+            }
+        }
+
+        // 11D. JSON Template Export & Import
+        function exportJSON() {
+            document.getElementById('exportMenu').classList.add('hidden');
+            const dataStr = JSON.stringify(appState, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'chronos_timetable_template.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Schedule JSON template exported!', 'success');
+        }
+
+        function importJSON(event) {
+            document.getElementById('exportMenu').classList.add('hidden');
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported && imported.config && Array.isArray(imported.categories) && Array.isArray(imported.activities)) {
+                        appState = imported;
+                        initConfigPanelUI();
+                        renderAll();
+                        showToast('Timetable template restored successfully!', 'success');
+                    } else {
+                        showToast('Invalid JSON template structure.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Could not parse JSON file.', 'error');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function loadSampleSchedule() {
+            document.getElementById('exportMenu').classList.add('hidden');
+            populateInitialSampleData();
+            initConfigPanelUI();
+            renderAll();
+            showToast('Loaded sample college & research timetable!', 'success');
+        }
+
+        function openConfirmClearModal() {
+            document.getElementById('exportMenu').classList.add('hidden');
+            document.getElementById('confirmClearModal').classList.remove('hidden');
+        }
+
+        function closeConfirmClearModal() {
+            document.getElementById('confirmClearModal').classList.add('hidden');
+        }
+
+        function confirmClearAllActivities() {
+            appState.activities = [];
+            closeConfirmClearModal();
+            renderAll();
+            showToast('Entire schedule cleared. Click any slot or "Fill Empty as Free" to start fresh.', 'info');
+        }
+
+        // 11E. Complete GitHub Repository .ZIP Generator
+        async function downloadGitHubRepoZip() {
+            const menu = document.getElementById('exportMenu');
+            if (menu) menu.classList.add('hidden');
+
+            if (typeof JSZip === 'undefined') {
+                showToast('JSZip library is still loading. Please try again in a moment.', 'error');
+                return;
+            }
+
+            showToast('Packaging GitHub repository (.zip)...', 'info');
+
+            try {
+                const zip = new JSZip();
+
+                // 1. Clean self-contained index.html snapshot
+                const cleanHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+                zip.file('index.html', cleanHtml);
+
+                // 2. Comprehensive README.md with usage & deployment guide
+                const readmeContent = `# 📅 Chronos Academic — Timetable & Smart Slot Planner
+
+A single-page, client-side interactive timetable builder designed for **students, professors, researchers, and academic staff**. Create your custom college or research schedule, automatically detect and manage free slots for deep study or relaxation, and export your timetable to **Excel (.xlsx 2D Grid)**, **Landscape PDF (.pdf)**, **High-Res Image (.png)**, or **JSON backups**.
+
+---
+
+## ✨ Key Features
+
+1. **User-Defined Timetable Grid & Granularity**
+   - Customize active days of the week (\`Monday\` through \`Sunday\`).
+   - Define custom daily start and end times (e.g., \`08:00 AM\` to \`06:00 PM\`).
+   - Choose fixed or custom slot intervals (\`15m\`, \`30m\`, \`45m\`, \`60m\`, or any custom duration in minutes).
+2. **Mandatory Daily Lunch Break Builder**
+   - Enforces a minimum **30-minute** lunch break window.
+   - Apply your lunch break across all active days with a single click.
+3. **Custom Academic & Relaxation Categories**
+   - Pre-configured with *Lectures, Practicals/Labs, Research Time, Study Time, Revision Time, Quiet Time, Relax Time, Lunch Break,* and *Free Slot*.
+   - Create unlimited custom categories with your own color palette.
+4. **Smart Slot Finder (\`Fill Empty as Free Slots\`)**
+   - Automatically scans your timetable for unassigned gaps and converts them into editable **Free Slots**.
+   - Calculates exact **Free Hours Available** per day and across the entire week.
+   - Click any Free Slot to convert all or part of it into Study Time, Research, or Relaxation (automatically splits multi-hour free blocks if you only assign a partial window).
+5. **Multi-Format Exports & Offline Persistence**
+   - **Excel 2D Grid (\`.xlsx\`):** Replicates the visual 2D weekly timetable grid along with a category hours summary table.
+   - **Landscape PDF (\`.pdf\`):** Formatted for A4 landscape printing.
+   - **High-Res Image (\`.png\`):** Clean snapshot for sharing or mobile reference.
+   - **Save/Load Template (\`.json\`) & Auto-Save:** Automatically saves changes in browser \`localStorage\` and supports \`.json\` file backups.
+
+---
+
+## 🚀 How to Use & Enter Your Schedule Details
+
+### Step 1: Set Your Timetable Header
+- At the top of the timetable card, click directly on the **Title** (*"Fall Semester — Academic & Research Timetable"*) and **Subtitle** (*"Faculty / Student Schedule"*) to type your name, semester, department, or batch.
+
+### Step 2: Configure Days, Hours & Slot Duration
+1. Click the **\`Grid & Categories\`** button in the top navigation bar.
+2. Under **1. Timetable Grid & Granularity**:
+   - Select your **Active Days of the Week**.
+   - Enter your **Daily Start Time** and **Daily End Time**.
+   - Select your **Slot Interval** (\`15m\`, \`30m\`, \`45m\`, \`60m\`, or \`Custom...\`).
+   - Click **\`Update Timetable Grid\`**.
+
+### Step 3: Add Your Daily Lunch Break (Min 30 Mins)
+1. Inside the **\`Grid & Categories\`** drawer, look under **2. Daily Lunch Break**.
+2. Set your **Lunch Start** and **Lunch End** times (must be at least 30 minutes).
+3. Click **\`Apply Lunch Break (Min 30m)\`** to block out lunch across all active days.
+
+### Step 4: Add Custom Categories (Optional)
+1. Under **3. Academic & Relax Categories**, type a category name (e.g., *Office Hours*, *Thesis Writing*, *Gym/Walk*), pick a color, and click **\`Add\`**.
+
+### Step 5: Enter Lectures, Labs & Fixed Commitments
+- Click any empty cell in the timetable grid **OR** click the **\`+ Add Activity\`** button in the top bar.
+- Enter:
+  - **Activity Title / Subject Name** (or click one of the quick-fill preset pills).
+  - **Category** (e.g., *Lectures*, *Practicals / Labs*).
+  - **Assign to Day(s)** (select multiple days at once for recurring classes!).
+  - **Start Time** & **End Time** (supports multi-hour blocks).
+  - **Room / Lab / Location** & **Instructor / Notes** (optional).
+- Click **\`Save Slot\`**.
+
+### Step 6: Run the Smart Slot Finder & Assign Study/Relax Time
+1. Once your fixed classes and lunch are entered, click **\`Fill Empty as Free Slots\`** in the top navigation bar.
+2. All remaining gaps are automatically marked as **Free Slots**, and the **Free Hours Left** counter updates at the top.
+3. Click any **Free Slot** card in the grid to reassign it (or a portion of it) to *Study Time*, *Research Time*, *Revision Time*, *Quiet Time*, or *Relax Time*.
+
+### Step 7: Export & Print
+- Click **\`Export / Save\`** in the top-right corner to download:
+  - **Excel 2D Grid (\`.xlsx\`)**
+  - **Landscape PDF (\`.pdf\`)**
+  - **High-Res Image (\`.png\`)**
+  - **Save Template (\`.json\`)** for future editing.
+
+---
+
+## 🌐 Deploying to GitHub Pages
+
+1. Extract this \`.zip\` archive.
+2. Create a new repository on [GitHub](https://github.com/new) (e.g., \`academic-timetable-planner\`).
+3. Upload \`index.html\`, \`README.md\`, \`LICENSE\`, and \`.nojekyll\` to the root of your repository and commit.
+4. Go to **Settings** → **Pages** → select \`main\` branch and \`/ (root)\` folder → click **Save**.
+5. Your app will be live at \`https://<your-username>.github.io/<repo-name>/\`.
+`;
+                zip.file('README.md', readmeContent);
+
+                // 3. MIT LICENSE file
+                const licenseContent = `MIT License
+
+Copyright (c) ${new Date().getFullYear()} Chronos Academic Timetable Planner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+`;
+                zip.file('LICENSE', licenseContent);
+
+                // 4. .nojekyll file for instant GitHub Pages static serving
+                zip.file('.nojekyll', '');
+
+                // 5. Sample schedule template JSON
+                zip.file('sample-schedule-template.json', JSON.stringify(appState, null, 2));
+
+                const blob = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'chronos-academic-timetable-github-repo.zip';
+                a.click();
+                URL.revokeObjectURL(url);
+
+                showToast('GitHub Repository (.zip) downloaded! Unzip and upload to GitHub.', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Failed to generate .zip package.', 'error');
+            }
+        }
+
+        /**************************************************************
+         * 12. UTILITIES & TOAST NOTIFICATIONS
+         **************************************************************/
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const styles = {
+                success: 'bg-slate-900 border-emerald-500 text-white',
+                error: 'bg-rose-950 border-rose-500 text-white',
+                info: 'bg-slate-900 border-indigo-500 text-white'
+            };
+            const icons = {
+                success: '<i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>',
+                error: '<i class="fa-solid fa-circle-exclamation text-rose-400 text-base"></i>',
+                info: '<i class="fa-solid fa-circle-info text-indigo-400 text-base"></i>'
+            };
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border-l-4 text-xs font-medium transition-all duration-300 ${styles[type] || styles.info}`;
+            toast.innerHTML = `
+                ${icons[type] || icons.info}
+                <span class="flex-1 leading-relaxed">${escapeHtml(message)}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(8px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3600);
+        }
+    </script>
+</body>
+</html>
