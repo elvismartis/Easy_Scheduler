@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chronos | Academic Timetable & Smart Slot Planner</title>
+    <title>Easy Scheduler | Academic Timetable & Smart Slot Planner</title>
     <!-- Global Error Guard to prevent generic cross-origin Script error -->
     <script>
         window.addEventListener('error', function(e) {
@@ -33,13 +33,17 @@
                 theme: {
                     extend: {
                         fontFamily: {
-                            sans: ['Inter', 'sans-serif'],
+                            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
                         },
                         colors: {
                             academic: {
                                 50: '#f8fafc',
                                 100: '#f1f5f9',
                                 200: '#e2e8f0',
+                                300: '#cbd5e1',
+                                400: '#94a3b8',
+                                500: '#64748b',
+                                600: '#475569',
                                 700: '#334155',
                                 800: '#1e293b',
                                 900: '#0f172a',
@@ -52,140 +56,267 @@
     </script>
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            color: #0f172a;
+        :root {
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --bg-page: #f8fafc;
+            --card-border: #e2e8f0;
         }
-        /* Custom scrollbar for clean UI */
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-page);
+            color: #0f172a;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Subtle minimalist scrollbars */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: #f1f5f9;
+            background: transparent;
         }
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
-            border-radius: 4px;
+            border-radius: 9999px;
         }
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+
+        /* Tabular figures for time numbers */
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Timetable slot cards */
         .timetable-cell {
-            transition: all 0.15s ease-in-out;
+            transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), 
+                        box-shadow 0.16s cubic-bezier(0.16, 1, 0.3, 1), 
+                        opacity 0.2s ease,
+                        border-color 0.15s ease;
+            position: relative;
         }
         .timetable-cell:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transform: translateY(-1.5px);
+            box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
         }
-        .free-slot-pattern {
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 10px 10px;
+
+        /* Hover actions inside slot cards */
+        .cell-hover-actions {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            transform: translateY(-2px);
         }
+        .timetable-cell:hover .cell-hover-actions {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* Subtle zen pattern for free slots */
+        .free-slot-zen {
+            background-color: #fafbfc;
+            background-image: radial-gradient(#94a3b8 0.75px, transparent 0.75px);
+            background-size: 8px 8px;
+            border: 1px dashed #cbd5e1;
+            transition: all 0.15s ease;
+        }
+        .free-slot-zen:hover {
+            background-color: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        /* Empty slot drop target */
+        .empty-slot-btn {
+            border: 1px dashed #e2e8f0;
+            background: transparent;
+            transition: all 0.15s ease;
+        }
+        .empty-slot-btn:hover {
+            border-color: #94a3b8;
+            background-color: rgba(241, 245, 249, 0.6);
+        }
+        .empty-slot-btn .plus-indicator {
+            opacity: 0;
+            transform: scale(0.85);
+            transition: all 0.15s ease;
+        }
+        .empty-slot-btn:hover .plus-indicator {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Realtime search / category filter highlight & dimming */
+        .slot-dimmed {
+            opacity: 0.18 !important;
+            filter: grayscale(60%);
+            transform: none !important;
+            box-shadow: none !important;
+            pointer-events: none;
+        }
+        .slot-highlighted {
+            box-shadow: 0 0 0 2px #475569, 0 8px 18px -3px rgba(15, 23, 42, 0.14) !important;
+            transform: translateY(-2px) !important;
+            z-index: 10;
+        }
+
+        /* Modal transitions */
+        @keyframes modalZoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.97) translateY(-6px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .animate-modal-in {
+            animation: modalZoomIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Print styles */
         @media print {
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
             .no-print {
+                display: none !important;
+            }
+            #printableTimetableArea {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .timetable-cell {
+                box-shadow: none !important;
+                transform: none !important;
+                break-inside: avoid;
+            }
+            .cell-hover-actions {
                 display: none !important;
             }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col bg-slate-50/60 text-slate-800">
 
-    <!-- Top Navigation & Action Bar -->
-    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30 no-print">
-        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
-            <!-- Brand -->
+    <!-- Top Minimalist Header & Navigation Bar -->
+    <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 no-print transition-all">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Brand & Tagline -->
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-inner">
-                    <i class="fa-solid fa-calendar-check text-xl text-white"></i>
+                <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shadow-xs">
+                    <i class="fa-solid fa-calendar-check text-sm text-slate-200"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold tracking-tight flex items-center gap-2">
-                        Chronos Academic
-                        <span class="text-xs font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 px-2 py-0.5 rounded-full">Smart Slot Planner</span>
-                    </h1>
-                    <p class="text-xs text-slate-400">Custom Timetable, Free-Slot Finder & Multi-Format Exporter</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-base font-bold tracking-tight text-slate-900">Chronos</span>
+                        <span class="text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200/70 px-2 py-0.5 rounded-full">Timetable & Planner</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Primary Smart Actions -->
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <button onclick="openActivityModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow flex items-center gap-2 transition">
-                    <i class="fa-solid fa-plus"></i>
+            <!-- Realtime Search / Filter Input -->
+            <div class="flex-1 max-w-xs sm:max-w-sm relative hidden md:block">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
+                <input type="text" id="scheduleSearchInput" 
+                    placeholder="Search subjects, rooms, notes... (Press /)" 
+                    oninput="handleSearchFilter(this.value)" 
+                    class="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs pl-8 pr-8 py-2 rounded-lg border border-slate-200 focus:border-slate-400 focus:ring-1 focus:ring-slate-400 focus:outline-none transition placeholder:text-slate-400">
+                <button id="clearSearchBtn" onclick="clearSearchFilter()" class="hidden absolute right-2.5 top-2.5 text-xs text-slate-400 hover:text-slate-600" title="Clear filter">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Primary Action Controls -->
+            <div class="flex items-center gap-2">
+                <!-- Add Activity Primary Button -->
+                <button onclick="openActivityModal()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-2xs flex items-center gap-1.5 transition active:scale-98" title="Add class or study block (Shortcut: N)">
+                    <i class="fa-solid fa-plus text-[11px]"></i>
                     <span>Add Activity</span>
                 </button>
 
-                <button onclick="autoFillFreeSlots()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow flex items-center gap-2 transition" title="Automatically convert all unassigned gaps into editable Free Slots">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>Fill Empty as Free Slots</span>
+                <!-- Smart Slot Finder -->
+                <button onclick="autoFillFreeSlots()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 text-xs font-medium px-3 py-2 rounded-lg shadow-2xs flex items-center gap-1.5 transition active:scale-98" title="Automatically scan and fill open gaps with editable Free Slots (Shortcut: F)">
+                    <i class="fa-solid fa-wand-magic-sparkles text-slate-500 text-[11px]"></i>
+                    <span class="hidden sm:inline">Fill Empty Slots</span>
                 </button>
 
-                <button onclick="toggleConfigDrawer()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-medium px-3.5 py-2 rounded-lg flex items-center gap-2 transition">
-                    <i class="fa-solid fa-sliders"></i>
-                    <span>Grid & Categories</span>
+                <!-- Grid & Categories Drawer Toggle -->
+                <button onclick="toggleConfigDrawer()" id="btnToggleConfigDrawer" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 text-xs font-medium px-3 py-2 rounded-lg shadow-2xs flex items-center gap-1.5 transition active:scale-98" title="Configure active days, hours, lunch break, and categories">
+                    <i class="fa-solid fa-sliders text-slate-500 text-[11px]"></i>
+                    <span class="hidden sm:inline">Settings</span>
                 </button>
 
-                <button onclick="downloadGitHubRepoZip()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold px-3.5 py-2 rounded-lg shadow flex items-center gap-2 transition" title="Download complete GitHub Repository (.zip) with index.html, README.md, and LICENSE">
-                    <i class="fa-brands fa-github text-base"></i>
-                    <span>Download GitHub .ZIP</span>
+                <!-- View Preferences Quick Dropdown (12h/24h & Density) -->
+                <button onclick="toggleTimeFormat()" id="btnToggleTimeFormat" class="hidden sm:flex bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 text-xs font-medium px-2.5 py-2 rounded-lg transition items-center gap-1" title="Toggle 12h (AM/PM) vs 24h format">
+                    <i class="fa-regular fa-clock text-slate-400 text-xs"></i>
+                    <span id="timeFormatBadge">12H</span>
                 </button>
 
-                <!-- Export Dropdown / Group -->
+                <!-- Export & Save Menu -->
                 <div class="relative inline-block text-left" id="exportDropdownContainer">
-                    <button onclick="toggleExportMenu()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-medium px-3.5 py-2 rounded-lg flex items-center gap-2 transition">
-                        <i class="fa-solid fa-download text-indigo-400"></i>
-                        <span>Export / Save</span>
-                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    <button onclick="toggleExportMenu()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 text-xs font-medium px-3 py-2 rounded-lg shadow-2xs flex items-center gap-1.5 transition active:scale-98">
+                        <i class="fa-solid fa-download text-slate-500 text-[11px]"></i>
+                        <span>Export</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
                     </button>
-                    <div id="exportMenu" class="hidden absolute right-0 mt-2 w-60 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 divide-y divide-slate-100 z-50 text-slate-700">
+                    <div id="exportMenu" class="hidden absolute right-0 mt-1.5 w-64 rounded-xl shadow-lg bg-white ring-1 ring-slate-200 divide-y divide-slate-100 z-50 text-slate-700 animate-modal-in">
                         <div class="py-1">
-                            <div class="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Print & Office Formats</div>
-                            <button onclick="exportToExcel()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3">
-                                <i class="fa-solid fa-file-excel text-emerald-600 text-base w-5"></i>
+                            <div class="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Documents & Print</div>
+                            <button onclick="exportToExcel()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 transition">
+                                <i class="fa-solid fa-file-excel text-emerald-600 text-sm w-4"></i>
                                 <div>
-                                    <div class="font-semibold text-slate-800">Excel 2D Grid (.xlsx)</div>
-                                    <div class="text-xs text-slate-400">Editable spreadsheet + stats</div>
+                                    <div class="font-medium text-slate-800">Excel 2D Grid (.xlsx)</div>
+                                    <div class="text-[10px] text-slate-400">Spreadsheet table + category stats</div>
                                 </div>
                             </button>
-                            <button onclick="exportToPDF()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3">
-                                <i class="fa-solid fa-file-pdf text-rose-600 text-base w-5"></i>
+                            <button onclick="exportToPDF()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 transition">
+                                <i class="fa-solid fa-file-pdf text-rose-600 text-sm w-4"></i>
                                 <div>
-                                    <div class="font-semibold text-slate-800">Landscape PDF (.pdf)</div>
-                                    <div class="text-xs text-slate-400">Ready for A4 printing</div>
+                                    <div class="font-medium text-slate-800">Landscape PDF (.pdf)</div>
+                                    <div class="text-[10px] text-slate-400">Crisp A4 format ready for print</div>
                                 </div>
                             </button>
-                            <button onclick="exportToPNG()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3">
-                                <i class="fa-solid fa-image text-sky-600 text-base w-5"></i>
+                            <button onclick="exportToPNG()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 transition">
+                                <i class="fa-solid fa-image text-sky-600 text-sm w-4"></i>
                                 <div>
-                                    <div class="font-semibold text-slate-800">High-Res Image (.png)</div>
-                                    <div class="text-xs text-slate-400">Share on phone or desktop</div>
+                                    <div class="font-medium text-slate-800">High-Res Image (.png)</div>
+                                    <div class="text-[10px] text-slate-400">2x Retina snapshot for sharing</div>
                                 </div>
                             </button>
                         </div>
                         <div class="py-1">
-                            <div class="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Backup & Restore</div>
-                            <button onclick="exportJSON()" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-3">
-                                <i class="fa-solid fa-code text-amber-600 w-5"></i>
+                            <div class="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Backups & Code</div>
+                            <button onclick="exportJSON()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 transition">
+                                <i class="fa-solid fa-code text-indigo-600 text-sm w-4"></i>
                                 <span>Save Template (.json)</span>
                             </button>
-                            <label class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-3 cursor-pointer">
-                                <i class="fa-solid fa-upload text-indigo-600 w-5"></i>
+                            <label class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 transition cursor-pointer">
+                                <i class="fa-solid fa-upload text-indigo-500 text-sm w-4"></i>
                                 <span>Load Template (.json)</span>
                                 <input type="file" id="jsonImportInput" accept=".json" class="hidden" onchange="importJSON(event)">
                             </label>
-                            <button onclick="downloadGitHubRepoZip()" class="w-full text-left px-4 py-2 text-sm hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-3">
-                                <i class="fa-solid fa-file-zipper text-amber-600 w-5"></i>
+                            <button onclick="downloadGitHubRepoZip()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
+                                <i class="fa-brands fa-github text-slate-800 text-sm w-4"></i>
                                 <span>Download GitHub Repo (.zip)</span>
                             </button>
                         </div>
                         <div class="py-1">
-                            <button onclick="loadSampleSchedule()" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 text-indigo-600 flex items-center gap-3">
-                                <i class="fa-solid fa-flask w-5"></i>
-                                <span>Load Sample Demo Data</span>
+                            <button onclick="loadSampleSchedule()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 text-slate-600 flex items-center gap-2.5 transition">
+                                <i class="fa-solid fa-rotate-left text-slate-400 text-sm w-4"></i>
+                                <span>Load Demo Sample Data</span>
                             </button>
-                            <button onclick="openConfirmClearModal()" class="w-full text-left px-4 py-2 text-sm hover:bg-rose-50 text-rose-600 flex items-center gap-3">
-                                <i class="fa-solid fa-trash-can w-5"></i>
+                            <button onclick="openConfirmClearModal()" class="w-full text-left px-3.5 py-2 text-xs hover:bg-rose-50 text-rose-600 flex items-center gap-2.5 transition">
+                                <i class="fa-solid fa-trash-can text-sm w-4"></i>
                                 <span>Clear Entire Schedule</span>
                             </button>
                         </div>
@@ -195,395 +326,465 @@
         </div>
     </header>
 
-    <!-- Collapsible Configuration & Custom Category Drawer -->
-    <section id="configDrawer" class="bg-white border-b border-slate-200 shadow-sm no-print hidden">
-        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
-            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+    <!-- Collapsible Settings & Preferences Drawer -->
+    <section id="configDrawer" class="bg-white border-b border-slate-200/90 shadow-xs no-print hidden transition-all duration-200">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-5">
+            
+            <!-- Drawer Header & Tab Selector -->
+            <div class="flex flex-wrap items-center justify-between pb-3 mb-4 border-b border-slate-100 gap-3">
                 <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-gears text-indigo-600 text-lg"></i>
-                    <h2 class="text-base font-bold text-slate-800">Timetable Configuration & Custom Categories</h2>
+                    <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Planner Settings</span>
+                    <span class="text-xs text-slate-400">|</span>
+                    <!-- Tabs -->
+                    <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-xs font-medium">
+                        <button type="button" onclick="switchConfigTab('grid')" id="tabBtn-grid" class="px-3 py-1 rounded-md bg-white text-slate-800 shadow-2xs transition">Grid & Hours</button>
+                        <button type="button" onclick="switchConfigTab('lunch')" id="tabBtn-lunch" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">Lunch Break</button>
+                        <button type="button" onclick="switchConfigTab('categories')" id="tabBtn-categories" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">Categories</button>
+                    </div>
                 </div>
-                <button onclick="toggleConfigDrawer()" class="text-slate-400 hover:text-slate-600 text-sm flex items-center gap-1">
-                    <i class="fa-solid fa-xmark text-lg"></i> Close Panel
+                <button onclick="toggleConfigDrawer()" class="text-slate-400 hover:text-slate-600 text-xs flex items-center gap-1 transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                    <span>Close</span>
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- 1. Grid Time & Granularity Settings -->
-                <div class="lg:col-span-5 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <i class="fa-regular fa-clock text-indigo-600"></i>
-                        1. Timetable Grid & Granularity
-                    </h3>
-
-                    <!-- Active Days Checkboxes -->
-                    <div class="mb-4">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Active Days of the Week</label>
+            <!-- Tab Content 1: Grid & Hours -->
+            <div id="tabContent-grid" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+                    <!-- Active Days -->
+                    <div class="md:col-span-6 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-semibold text-slate-700">Active Days of the Week</label>
+                            <div class="flex gap-2 text-[11px] text-slate-500">
+                                <button type="button" onclick="quickSelectDays('weekdays')" class="hover:text-slate-900 underline">Mon–Fri</button>
+                                <button type="button" onclick="quickSelectDays('all')" class="hover:text-slate-900 underline">Mon–Sun</button>
+                            </div>
+                        </div>
                         <div id="daysCheckboxContainer" class="flex flex-wrap gap-1.5">
                             <!-- Populated by JS -->
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Daily Start Time</label>
-                            <input type="time" id="cfgStartTime" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Daily End Time</label>
-                            <input type="time" id="cfgEndTime" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Slot Interval (Mins)</label>
-                            <div class="flex gap-1">
-                                <select id="cfgSlotPreset" onchange="handleSlotPresetChange()" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                    <option value="15">15 mins</option>
-                                    <option value="30">30 mins</option>
-                                    <option value="45">45 mins</option>
-                                    <option value="60">60 mins</option>
-                                    <option value="custom">Custom...</option>
-                                </select>
-                                <input type="number" id="cfgCustomSlot" min="10" max="180" step="5" class="hidden w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-sm" placeholder="Mins">
-                            </div>
-                        </div>
-                    </div>
-
-                    <button onclick="applyGridConfig()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2.5 px-4 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-rotate"></i>
-                        Update Timetable Grid
-                    </button>
-                </div>
-
-                <!-- 2. Mandatory Daily Lunch Break Builder -->
-                <div class="lg:col-span-3 bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <i class="fa-solid fa-utensils text-amber-600"></i>
-                            2. Daily Lunch Break
-                        </h3>
-                        <p class="text-xs text-slate-500 mb-3">Set your preferred lunch window (minimum 30 minutes). Apply across all active days in one click.</p>
-
-                        <div class="grid grid-cols-2 gap-2.5 mb-3">
+                    <!-- Time Bounds & Interval -->
+                    <div class="md:col-span-6 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Lunch Start</label>
-                                <input type="time" id="cfgLunchStart" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Daily Start</label>
+                                <input type="time" id="cfgStartTime" class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Lunch End</label>
-                                <input type="time" id="cfgLunchEnd" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Daily End</label>
+                                <input type="time" id="cfgEndTime" class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Slot Interval</label>
+                                <div class="flex gap-1">
+                                    <select id="cfgSlotPreset" onchange="handleSlotPresetChange()" class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                                        <option value="15">15m</option>
+                                        <option value="30">30m</option>
+                                        <option value="45">45m</option>
+                                        <option value="60">60m</option>
+                                        <option value="custom">Custom...</option>
+                                    </select>
+                                    <input type="number" id="cfgCustomSlot" min="10" max="180" step="5" class="hidden w-16 rounded-lg border border-slate-200 bg-white px-1.5 py-1.5 text-xs" placeholder="Mins">
+                                </div>
                             </div>
                         </div>
 
-                        <label class="flex items-center gap-2 text-xs text-slate-600 mb-3 cursor-pointer">
-                            <input type="checkbox" id="cfgLunchOverwrite" class="rounded text-indigo-600 focus:ring-indigo-500">
-                            <span>Overwrite existing slots during lunch window</span>
-                        </label>
-                    </div>
-
-                    <button onclick="applyLunchToAllDays()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs py-2.5 px-4 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-mug-hot"></i>
-                        Apply Lunch Break (Min 30m)
-                    </button>
-                </div>
-
-                <!-- 3. User-Defined Category Manager -->
-                <div class="lg:col-span-4 bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-tags text-emerald-600"></i>
-                            3. Academic & Relax Categories
-                        </h3>
-                        <p class="text-xs text-slate-500 mb-2.5">Define custom block types (e.g., Quiet Time, Research, Revision, Lectures).</p>
-
-                        <!-- Add Category Input Row -->
-                        <div class="flex gap-2 mb-3">
-                            <input type="text" id="newCatName" placeholder="New Category (e.g., Office Hours)" class="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                            <input type="color" id="newCatColor" value="#6366f1" class="w-9 h-8 rounded cursor-pointer border border-slate-300 p-0.5 bg-white" title="Pick Category Color">
-                            <button onclick="addNewCategory()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
-                                Add
+                        <div class="mt-3 flex items-center justify-between pt-3 border-t border-slate-200/60">
+                            <div class="flex items-center gap-3 text-xs text-slate-600">
+                                <span>Density:</span>
+                                <button type="button" onclick="toggleDensity()" id="densityToggleBtn" class="text-xs font-medium text-slate-700 hover:text-slate-900 underline">Comfortable</button>
+                            </div>
+                            <button onclick="applyGridConfig()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-1.5 px-4 rounded-lg shadow-2xs transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-check text-[11px]"></i>
+                                Apply Grid Settings
                             </button>
-                        </div>
-
-                        <!-- Category Badges List -->
-                        <div id="categoryManagerList" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-1">
-                            <!-- Populated by JS -->
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Tab Content 2: Lunch Break Builder -->
+            <div id="tabContent-lunch" class="hidden space-y-4">
+                <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200/80 max-w-2xl">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fa-solid fa-utensils text-slate-600 text-xs"></i>
+                        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Mandatory Daily Lunch Break</h4>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3 leading-relaxed">Block out a guaranteed lunch and recharge window (minimum 30 minutes) across all your active days.</p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Lunch Start Time</label>
+                            <input type="time" id="cfgLunchStart" class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Lunch End Time</label>
+                            <input type="time" id="cfgLunchEnd" class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200/60">
+                        <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
+                            <input type="checkbox" id="cfgLunchOverwrite" class="rounded border-slate-300 text-slate-800 focus:ring-slate-400">
+                            <span>Overwrite existing classes/slots during this window</span>
+                        </label>
+                        <button onclick="applyLunchToAllDays()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-1.5 px-4 rounded-lg shadow-2xs transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-mug-hot text-[11px]"></i>
+                            Apply Lunch to All Days
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content 3: Categories & Palette -->
+            <div id="tabContent-categories" class="hidden space-y-4">
+                <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Academic & Relaxation Categories</h4>
+                            <p class="text-[11px] text-slate-500">Customize tags, adjust colors, or restore the muted minimalist palette.</p>
+                        </div>
+                        <button type="button" onclick="restoreMinimalistPalette()" class="text-xs text-slate-600 hover:text-slate-900 font-medium px-2.5 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles text-[11px] text-slate-500"></i>
+                            Restore Muted Palette
+                        </button>
+                    </div>
+
+                    <!-- Add Category Form -->
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <input type="text" id="newCatName" placeholder="New category name (e.g., Office Hours, Seminar)..." 
+                            class="flex-1 min-w-[200px] rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                        <div class="flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-lg">
+                            <span class="text-[11px] text-slate-500">Color:</span>
+                            <input type="color" id="newCatColor" value="#435585" class="w-6 h-6 rounded-md cursor-pointer border-0 p-0 bg-transparent" title="Pick Category Color">
+                        </div>
+                        <button onclick="addNewCategory()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition">
+                            Add Category
+                        </button>
+                    </div>
+
+                    <!-- Category Pills List -->
+                    <div id="categoryManagerList" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
         </div>
     </section>
 
-    <!-- Main Content Container -->
-    <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <!-- Main Content Layout -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-5 space-y-5">
 
-        <!-- Live Analytics & Smart Slot Finder Bar -->
-        <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 no-print">
-            <!-- Key Metric Cards -->
-            <div class="lg:col-span-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <span class="text-xs font-semibold text-slate-400 uppercase">Total Capacity</span>
-                    <div class="mt-2 flex items-baseline justify-between">
-                        <span id="statTotalCapacity" class="text-2xl font-extrabold text-slate-800">0h</span>
-                        <i class="fa-regular fa-calendar text-slate-300 text-lg"></i>
+        <!-- Metrics & Category Breakdown Bar -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 no-print">
+            
+            <!-- 4 Minimalist Metric Cards -->
+            <div class="lg:col-span-5 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                
+                <!-- Total Capacity -->
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Grid</span>
+                    <div class="my-1.5 flex items-baseline justify-between">
+                        <span id="statTotalCapacity" class="text-xl font-bold text-slate-900 tabular-nums">0h</span>
+                        <i class="fa-regular fa-calendar text-slate-300 text-sm"></i>
                     </div>
-                    <span id="statGridSummary" class="text-[11px] text-slate-400 mt-1">6 days active</span>
+                    <span id="statGridSummary" class="text-[10px] text-slate-400 truncate">6 days active</span>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <span class="text-xs font-semibold text-indigo-600 uppercase">Scheduled Work</span>
-                    <div class="mt-2 flex items-baseline justify-between">
-                        <span id="statScheduledHours" class="text-2xl font-extrabold text-indigo-600">0h</span>
-                        <i class="fa-solid fa-book-open text-indigo-200 text-lg"></i>
+                <!-- Scheduled Work -->
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Classes & Labs</span>
+                    <div class="my-1.5 flex items-baseline justify-between">
+                        <span id="statScheduledHours" class="text-xl font-bold text-slate-900 tabular-nums">0h</span>
+                        <i class="fa-solid fa-graduation-cap text-slate-300 text-sm"></i>
                     </div>
-                    <span class="text-[11px] text-slate-400 mt-1">Classes, Study & Labs</span>
+                    <span class="text-[10px] text-slate-400">Fixed commitments</span>
                 </div>
 
-                <div class="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-between">
-                    <span class="text-xs font-bold text-emerald-700 uppercase">Free Hours Left</span>
-                    <div class="mt-2 flex items-baseline justify-between">
-                        <span id="statFreeHours" class="text-2xl font-extrabold text-emerald-700">0h</span>
-                        <i class="fa-solid fa-sparkles text-emerald-400 text-lg"></i>
+                <!-- Free Hours Available -->
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Free Hours Left</span>
+                    <div class="my-1.5 flex items-baseline justify-between">
+                        <span id="statFreeHours" class="text-xl font-bold text-slate-900 tabular-nums">0h</span>
+                        <i class="fa-solid fa-sparkles text-slate-300 text-sm"></i>
                     </div>
-                    <span id="statFreeSlotsCount" class="text-[11px] text-emerald-600 font-medium mt-1">Available to assign</span>
+                    <span id="statFreeSlotsCount" class="text-[10px] text-slate-400 truncate">Available to plan</span>
                 </div>
 
-                <div class="bg-amber-50/70 p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between">
-                    <span class="text-xs font-bold text-amber-700 uppercase">Relax & Lunch</span>
-                    <div class="mt-2 flex items-baseline justify-between">
-                        <span id="statBreakHours" class="text-2xl font-extrabold text-amber-700">0h</span>
-                        <i class="fa-solid fa-mug-saucer text-amber-300 text-lg"></i>
+                <!-- Relax & Breaks -->
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Break & Rest</span>
+                    <div class="my-1.5 flex items-baseline justify-between">
+                        <span id="statBreakHours" class="text-xl font-bold text-slate-900 tabular-nums">0h</span>
+                        <i class="fa-solid fa-mug-saucer text-slate-300 text-sm"></i>
                     </div>
-                    <span class="text-[11px] text-amber-600 mt-1">Restorative blocks</span>
+                    <span class="text-[10px] text-slate-400">Restorative hours</span>
                 </div>
+
             </div>
 
-            <!-- Category Distribution Breakdown & Quick Filter -->
-            <div class="lg:col-span-7 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <!-- Category Distribution Bar & Interactive Filtering -->
+            <div class="lg:col-span-7 bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <div class="flex items-center gap-2">
-                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Category Hours Breakdown</h3>
-                        <span class="text-xs text-slate-400">(Click any Free Slot or empty cell in the grid to assign study/relax time)</span>
+                        <span class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Hours Breakdown</span>
+                        <span class="text-[11px] text-slate-400 hidden sm:inline">• Click any tag to filter timetable</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="clearOnlyFreeSlots()" class="text-xs text-slate-500 hover:text-rose-600 font-medium px-2 py-0.5 rounded border border-slate-200 hover:border-rose-200 transition">
-                            Reset "Free Slot" Labels
+                        <button id="activeFilterPill" onclick="clearCategoryFilter()" class="hidden text-[11px] bg-slate-900 text-white font-medium px-2 py-0.5 rounded-md flex items-center gap-1 transition">
+                            <span id="activeFilterName">Filter</span>
+                            <i class="fa-solid fa-xmark text-[10px]"></i>
+                        </button>
+                        <button onclick="clearOnlyFreeSlots()" class="text-[11px] text-slate-500 hover:text-slate-800 font-medium px-2 py-0.5 rounded border border-slate-200 hover:border-slate-300 transition">
+                            Clear Free Labels
                         </button>
                     </div>
                 </div>
 
-                <!-- Stacked Progress Bar -->
-                <div id="categoryProgressBar" class="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex mb-3">
+                <!-- Slim Progress Bar -->
+                <div id="categoryProgressBar" class="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex gap-0.5 mb-2.5">
                     <!-- Dynamic segments -->
                 </div>
 
-                <!-- Category Pills with Hours -->
-                <div id="categoryStatsPills" class="flex flex-wrap gap-2">
-                    <!-- Dynamic pills -->
+                <!-- Interactive Category Pills -->
+                <div id="categoryStatsPills" class="flex flex-wrap gap-1.5">
+                    <!-- Dynamic pills populated by JS -->
                 </div>
             </div>
+
         </section>
 
         <!-- Printable / Exportable Timetable Wrapper -->
-        <section id="printableTimetableArea" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-4 sm:p-6">
+        <section id="printableTimetableArea" class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden p-4 sm:p-6 transition-all">
             
-            <!-- Editable Timetable Header (Included in PDF/PNG exports) -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-5 border-b border-slate-200">
+            <!-- Editable Header Block -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200/70">
                 <div class="flex-1">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 group">
                         <input type="text" id="scheduleTitleInput" oninput="saveHeaderMeta()" value="Fall Semester — Academic & Research Timetable" 
-                            class="text-xl sm:text-2xl font-extrabold text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-600 focus:outline-none w-full sm:w-auto px-1 -ml-1 rounded transition"
+                            class="text-lg sm:text-xl font-bold text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-slate-800 focus:outline-none w-full sm:w-auto px-1 -ml-1 rounded transition"
                             title="Click to edit Timetable Title">
-                        <i class="fa-solid fa-pen text-xs text-slate-300 no-print"></i>
+                        <i class="fa-solid fa-pen text-[10px] text-slate-300 group-hover:text-slate-500 transition no-print"></i>
                     </div>
-                    <div class="flex flex-wrap items-center gap-4 mt-1 text-xs text-slate-500">
+                    <div class="flex flex-wrap items-center gap-3 mt-1 text-xs text-slate-500">
                         <div class="flex items-center gap-1.5">
-                            <i class="fa-regular fa-user text-indigo-500"></i>
-                            <input type="text" id="scheduleSubtitleInput" oninput="saveHeaderMeta()" value="Dr. / Student Name • Dept. of Computer Science" 
-                                class="bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-600 focus:outline-none text-slate-600 font-medium px-1 -ml-1 rounded"
-                                title="Click to edit Owner / Department">
+                            <i class="fa-regular fa-user text-slate-400 text-[11px]"></i>
+                            <input type="text" id="scheduleSubtitleInput" oninput="saveHeaderMeta()" value="Faculty / Student Schedule • Dept. of Computer Science" 
+                                class="bg-transparent border-b border-transparent hover:border-slate-300 focus:border-slate-800 focus:outline-none text-slate-600 font-medium px-1 -ml-1 rounded transition"
+                                title="Click to edit Subtitle / Department">
                         </div>
                         <span class="text-slate-300">•</span>
-                        <span id="headerTimeRangeBadge" class="font-medium text-slate-600">08:00 - 17:00 (60m slots)</span>
+                        <span id="headerTimeRangeBadge" class="font-medium text-slate-500 tabular-nums">08:00 – 17:00 (60m grid)</span>
                     </div>
                 </div>
 
-                <!-- Mini Legend for Print/Export -->
-                <div id="exportLegendContainer" class="flex flex-wrap items-center gap-2">
+                <!-- Mini Legend for Print / Export -->
+                <div id="exportLegendContainer" class="flex flex-wrap items-center gap-1.5">
                     <!-- Populated by JS -->
                 </div>
             </div>
 
-            <!-- Interactive 2D Timetable Grid -->
-            <div class="overflow-x-auto">
-                <table class="w-full border-collapse table-fixed min-w-[850px]" id="timetableGrid">
+            <!-- Active Search Filter Banner (If search text entered) -->
+            <div id="searchFilterBanner" class="hidden mb-3 px-3 py-1.5 bg-slate-100 rounded-lg text-xs text-slate-600 flex items-center justify-between no-print">
+                <span id="searchFilterText">Filtering schedule...</span>
+                <button onclick="clearSearchFilter()" class="text-xs font-semibold text-slate-800 hover:underline">Clear Search</button>
+            </div>
+
+            <!-- 2D Timetable Table Grid -->
+            <div class="overflow-x-auto relative">
+                <table class="w-full border-collapse table-fixed min-w-[800px]" id="timetableGrid">
                     <thead>
-                        <tr id="timetableHeaderRow" class="bg-slate-900 text-white">
+                        <tr id="timetableHeaderRow" class="bg-slate-50/90 text-slate-700 border-b border-slate-200">
                             <!-- Populated by JS -->
                         </tr>
                     </thead>
-                    <tbody id="timetableBody" class="divide-y divide-slate-200">
+                    <tbody id="timetableBody" class="divide-y divide-slate-100">
                         <!-- Populated by JS -->
                     </tbody>
                 </table>
             </div>
 
-            <!-- Footer Summary inside Printable Area -->
-            <div class="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
+            <!-- Printable Bottom Summary Footer -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
                 <div id="printableSummaryLine" class="font-medium text-slate-600">
                     <!-- Dynamic summary line -->
                 </div>
-                <div>Generated with Chronos Academic Timetable & Smart Slot Planner</div>
+                <div>Generated with Chronos Academic Timetable Planner</div>
             </div>
+
         </section>
 
     </main>
 
-    <!-- Add / Edit Activity Modal -->
-    <div id="activityModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-fadeIn">
-            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <i class="fa-solid fa-calendar-plus text-indigo-400 text-lg"></i>
-                    <h3 id="modalHeaderTitle" class="text-base font-bold">Assign Academic or Relax Slot</h3>
+    <!-- Activity Add / Edit Modal -->
+    <div id="activityModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200 animate-modal-in">
+            
+            <!-- Modal Header -->
+            <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-slate-900"></span>
+                    <h3 id="modalHeaderTitle" class="text-sm font-bold text-slate-900">Assign Activity Slot</h3>
                 </div>
-                <button onclick="closeActivityModal()" class="text-slate-400 hover:text-white transition">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+                <button onclick="closeActivityModal()" class="text-slate-400 hover:text-slate-700 transition" title="Close (Esc)">
+                    <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
             </div>
 
-            <form id="activityForm" onsubmit="saveActivityFromModal(event)" class="p-6 space-y-4">
+            <form id="activityForm" onsubmit="saveActivityFromModal(event)" class="p-5 space-y-4">
                 <input type="hidden" id="editingActivityId" value="">
 
-                <!-- Quick Preset Suggestions for Fast Entry -->
+                <!-- Quick Preset Tags -->
                 <div>
-                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Quick Fill Presets</label>
-                    <div class="flex flex-wrap gap-1.5">
-                        <button type="button" onclick="applyQuickPreset('Deep Study Session', 'cat_study')" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">📚 Study Time</button>
-                        <button type="button" onclick="applyQuickPreset('Research & Literature', 'cat_research')" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">🔬 Research</button>
-                        <button type="button" onclick="applyQuickPreset('Course Revision', 'cat_revision')" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">📝 Revision</button>
-                        <button type="button" onclick="applyQuickPreset('Quiet Reading / Focus', 'cat_quiet')" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">🤫 Quiet Time</button>
-                        <button type="button" onclick="applyQuickPreset('Walk / Coffee / Relax', 'cat_relax')" class="text-xs bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">🌿 Relax Time</button>
-                        <button type="button" onclick="applyQuickPreset('Lunch Break', 'cat_lunch')" class="text-xs bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 px-2.5 py-1 rounded-md font-medium transition">🍱 Lunch</button>
-                        <button type="button" onclick="applyQuickPreset('Free Slot', 'cat_free')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-md font-medium transition">✨ Free Slot</button>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Quick Fill Presets</label>
+                    <div class="flex flex-wrap gap-1">
+                        <button type="button" onclick="applyQuickPreset('Deep Study Session', 'cat_study')" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 px-2 py-0.5 rounded-md font-medium transition">📚 Study</button>
+                        <button type="button" onclick="applyQuickPreset('Research & Literature', 'cat_research')" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 px-2 py-0.5 rounded-md font-medium transition">🔬 Research</button>
+                        <button type="button" onclick="applyQuickPreset('Course Revision', 'cat_revision')" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 px-2 py-0.5 rounded-md font-medium transition">📝 Revision</button>
+                        <button type="button" onclick="applyQuickPreset('Quiet Reading / Focus', 'cat_quiet')" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 px-2 py-0.5 rounded-md font-medium transition">🤫 Quiet Time</button>
+                        <button type="button" onclick="applyQuickPreset('Campus Walk / Coffee', 'cat_relax')" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 px-2 py-0.5 rounded-md font-medium transition">🌿 Relax</button>
+                        <button type="button" onclick="applyQuickPreset('Lunch Break', 'cat_lunch')" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 px-2 py-0.5 rounded-md font-medium transition">🍱 Lunch</button>
+                        <button type="button" onclick="applyQuickPreset('Free Slot', 'cat_free')" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80 px-2 py-0.5 rounded-md font-medium transition">✨ Free Slot</button>
                     </div>
                 </div>
 
-                <!-- Activity Title & Category -->
-                <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                <!-- Subject Title & Category -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
                     <div class="sm:col-span-7">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Activity Title / Subject Name *</label>
-                        <input type="text" id="actTitle" required placeholder="e.g., CS301 Algorithms, Quiet Study..." 
-                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Activity Title / Subject *</label>
+                        <input type="text" id="actTitle" required placeholder="e.g., CS301 Algorithms, Linear Algebra..." 
+                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
                     </div>
                     <div class="sm:col-span-5">
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Category *</label>
-                        <select id="actCategory" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <select id="actCategory" required class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
                             <!-- Populated by JS -->
                         </select>
                     </div>
                 </div>
 
-                <!-- Days Selection (Multi-day check for new or recurring slots) -->
+                <!-- Day(s) Selection -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Assign to Day(s) *</label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold text-slate-700">Assign to Day(s) *</label>
+                        <div class="flex gap-2 text-[10px] text-slate-500">
+                            <button type="button" onclick="quickSelectModalDays('weekdays')" class="hover:text-slate-900 underline">Weekdays</button>
+                            <button type="button" onclick="quickSelectModalDays('all')" class="hover:text-slate-900 underline">All</button>
+                        </div>
+                    </div>
                     <div id="modalDaysCheckboxes" class="flex flex-wrap gap-1.5">
                         <!-- Populated by JS -->
                     </div>
                 </div>
 
-                <!-- Start Time & End Time -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Start Time *</label>
-                        <select id="actStartTime" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                            <!-- Populated by JS -->
-                        </select>
+                <!-- Time Bounds & Quick Duration Helpers -->
+                <div>
+                    <div class="grid grid-cols-2 gap-3 mb-1.5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Start Time *</label>
+                            <select id="actStartTime" onchange="handleModalStartTimeChange()" required class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">End Time *</label>
+                            <select id="actEndTime" required class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">End Time * <span class="text-[11px] font-normal text-slate-400">(Multi-slot supported)</span></label>
-                        <select id="actEndTime" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                            <!-- Populated by JS -->
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Metadata: Location & Instructor/Notes -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Room / Lab / Location <span class="text-slate-400 font-normal">(Optional)</span></label>
-                        <input type="text" id="actLocation" placeholder="e.g., Room 402, Central Library" 
-                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Instructor / Batch / Notes <span class="text-slate-400 font-normal">(Optional)</span></label>
-                        <input type="text" id="actNotes" placeholder="e.g., Prof. Sharma, Ch. 4 Prep" 
-                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <!-- Quick duration buttons -->
+                    <div class="flex items-center gap-1 text-[11px] text-slate-500">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 mr-1">Duration:</span>
+                        <button type="button" onclick="setModalDuration(30)" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 text-slate-700 transition">+30m</button>
+                        <button type="button" onclick="setModalDuration(45)" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 text-slate-700 transition">+45m</button>
+                        <button type="button" onclick="setModalDuration(60)" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 text-slate-700 transition">+1h</button>
+                        <button type="button" onclick="setModalDuration(90)" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 text-slate-700 transition">+1.5h</button>
+                        <button type="button" onclick="setModalDuration(120)" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 text-slate-700 transition">+2h</button>
                     </div>
                 </div>
 
-                <!-- Modal Footer Actions -->
-                <div class="pt-4 border-t border-slate-200 flex items-center justify-between gap-3">
-                    <button type="button" id="btnDeleteActivity" onclick="deleteCurrentActivity()" class="hidden bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-xs px-4 py-2.5 rounded-lg transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-trash-can"></i>
+                <!-- Location & Notes -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Room / Location <span class="text-slate-400 font-normal">(Optional)</span></label>
+                        <input type="text" id="actLocation" placeholder="e.g., Room 402, Lab 3" 
+                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Notes / Instructor <span class="text-slate-400 font-normal">(Optional)</span></label>
+                        <input type="text" id="actNotes" placeholder="e.g., Prof. Sharma, Homework prep" 
+                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:ring-1 focus:ring-slate-400 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <button type="button" id="btnDeleteActivity" onclick="deleteCurrentActivity()" class="hidden text-rose-600 hover:bg-rose-50 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can text-[11px]"></i>
                         Delete Block
                     </button>
                     <div class="flex items-center gap-2 ml-auto">
-                        <button type="button" onclick="closeActivityModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-4 py-2.5 rounded-lg transition">
+                        <button type="button" onclick="closeActivityModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-3.5 py-2 rounded-lg transition">
                             Cancel
                         </button>
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-5 py-2.5 rounded-lg shadow transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-check"></i>
+                        <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-2xs transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-check text-[11px]"></i>
                             Save Slot
                         </button>
                     </div>
                 </div>
+
             </form>
         </div>
     </div>
 
-    <!-- Confirmation Modal for Clearing Schedule -->
-    <div id="confirmClearModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-200">
-            <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4 text-xl">
+    <!-- Confirm Clear Modal -->
+    <div id="confirmClearModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-5 border border-slate-200 animate-modal-in">
+            <div class="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3 text-lg">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
-            <h3 class="text-lg font-bold text-slate-900">Clear Entire Timetable?</h3>
-            <p class="text-sm text-slate-500 mt-1 mb-6">This will remove all scheduled classes, study blocks, and free slots from your grid. Your custom categories and time settings will be preserved.</p>
-            <div class="flex justify-end gap-3">
-                <button onclick="closeConfirmClearModal()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700">Cancel</button>
-                <button onclick="confirmClearAllActivities()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow">Yes, Clear Schedule</button>
+            <h3 class="text-base font-bold text-slate-900">Clear Entire Schedule?</h3>
+            <p class="text-xs text-slate-500 mt-1 mb-5 leading-relaxed">This will remove all classes, research blocks, and free slots from your weekly grid. Your custom categories and time configuration will be retained.</p>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeConfirmClearModal()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Cancel</button>
+                <button onclick="confirmClearAllActivities()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-2xs transition">Yes, Clear Schedule</button>
             </div>
         </div>
     </div>
 
     <!-- Toast Notification Container -->
-    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
 
-    <!-- Application JavaScript -->
+    <!-- Main JavaScript Logic -->
     <script>
         /**************************************************************
-         * 1. STATE & DEFAULT CONFIGURATION
+         * 1. STATE & MINIMALIST MUTED PALETTE CONFIGURATION
          **************************************************************/
         const STORAGE_KEY = 'chronos_academic_timetable_v1';
         const ALL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+        // Curated calming, desaturated academic tones
         const DEFAULT_CATEGORIES = [
-            { id: 'cat_lecture', name: 'Lectures', color: '#4f46e5', isBreak: false, isFree: false },
-            { id: 'cat_lab', name: 'Practicals / Labs', color: '#0284c7', isBreak: false, isFree: false },
-            { id: 'cat_research', name: 'Research Time', color: '#7c3aed', isBreak: false, isFree: false },
-            { id: 'cat_study', name: 'Study Time', color: '#2563eb', isBreak: false, isFree: false },
-            { id: 'cat_revision', name: 'Revision Time', color: '#0d9488', isBreak: false, isFree: false },
-            { id: 'cat_quiet', name: 'Quiet Time', color: '#475569', isBreak: false, isFree: false },
-            { id: 'cat_relax', name: 'Relax Time', color: '#16a34a', isBreak: true, isFree: false },
-            { id: 'cat_lunch', name: 'Lunch Break', color: '#d97706', isBreak: true, isFree: false },
-            { id: 'cat_free', name: 'Free Slot', color: '#64748b', isBreak: false, isFree: true }
+            { id: 'cat_lecture', name: 'Lectures', color: '#435585', isBreak: false, isFree: false },
+            { id: 'cat_lab', name: 'Practicals / Labs', color: '#3a6b88', isBreak: false, isFree: false },
+            { id: 'cat_research', name: 'Research Time', color: '#635380', isBreak: false, isFree: false },
+            { id: 'cat_study', name: 'Study Time', color: '#3d5a80', isBreak: false, isFree: false },
+            { id: 'cat_revision', name: 'Revision Time', color: '#417270', isBreak: false, isFree: false },
+            { id: 'cat_quiet', name: 'Quiet Time', color: '#5a6472', isBreak: false, isFree: false },
+            { id: 'cat_relax', name: 'Relax Time', color: '#4f775f', isBreak: true, isFree: false },
+            { id: 'cat_lunch', name: 'Lunch Break', color: '#946b54', isBreak: true, isFree: false },
+            { id: 'cat_free', name: 'Free Slot', color: '#6c757d', isBreak: false, isFree: true }
         ];
 
         let appState = {
             meta: {
                 title: 'Fall Semester — Academic & Research Timetable',
-                subtitle: 'Faculty / Student Schedule • Smart Slot Planner'
+                subtitle: 'Faculty / Student Schedule • Dept. of Computer Science'
             },
             config: {
                 activeDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
@@ -591,14 +792,19 @@
                 dayEnd: '17:00',
                 slotDuration: 60, // in minutes
                 lunchStart: '13:00',
-                lunchEnd: '14:00'
+                lunchEnd: '14:00',
+                timeFormat: '12h', // '12h' or '24h'
+                density: 'comfortable' // 'comfortable' or 'compact'
             },
             categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)),
             activities: [] // { id, day, startTime, endTime, title, categoryId, location, notes }
         };
 
+        let currentActiveCategoryFilter = null;
+        let currentSearchQuery = '';
+
         /**************************************************************
-         * 2. TIME HELPER UTILITIES
+         * 2. TIME HELPERS
          **************************************************************/
         function timeToMinutes(tStr) {
             if (!tStr) return 0;
@@ -610,6 +816,19 @@
             const h = Math.floor(mins / 60);
             const m = mins % 60;
             return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function formatTimeDisplay(tStr) {
+            if (appState.config.timeFormat === '24h') {
+                return tStr;
+            }
+            const mins = timeToMinutes(tStr);
+            let h = Math.floor(mins / 60);
+            const m = mins % 60;
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12;
+            if (h === 0) h = 12;
+            return `${h}:${String(m).padStart(2, '0')} ${ampm}`;
         }
 
         function formatTime12h(tStr) {
@@ -627,7 +846,6 @@
             return Number.isInteger(hrs) ? `${hrs}h` : `${hrs.toFixed(1)}h`;
         }
 
-        // Generates the array of time slots based on current config
         function generateTimeSlots() {
             const startMins = timeToMinutes(appState.config.dayStart);
             const endMins = timeToMinutes(appState.config.dayEnd);
@@ -646,11 +864,12 @@
             return slots;
         }
 
-        // Convert hex color to soft pastel background + dark border
-        function hexToRGBA(hex, alpha = 0.14) {
+        function hexToRGBA(hex, alpha = 0.1) {
+            if (!hex) return `rgba(100, 116, 139, ${alpha})`;
             let c = hex.replace('#', '');
             if (c.length === 3) c = c.split('').map(x => x + x).join('');
             const num = parseInt(c, 16);
+            if (isNaN(num)) return `rgba(100, 116, 139, ${alpha})`;
             const r = (num >> 16) & 255;
             const g = (num >> 8) & 255;
             const b = num & 255;
@@ -663,14 +882,44 @@
         window.addEventListener('DOMContentLoaded', () => {
             loadFromStorage();
             initConfigPanelUI();
+            updateTimeFormatUI();
             renderAll();
 
-            // Close dropdowns when clicking outside
+            // Click outside handler for dropdown
             document.addEventListener('click', (e) => {
                 const container = document.getElementById('exportDropdownContainer');
                 const menu = document.getElementById('exportMenu');
                 if (container && !container.contains(e.target)) {
                     menu.classList.add('hidden');
+                }
+            });
+
+            // Global Keyboard Shortcuts
+            document.addEventListener('keydown', (e) => {
+                // If currently typing in an input/textarea/select, only handle Escape
+                const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+
+                if (e.key === 'Escape') {
+                    closeActivityModal();
+                    closeConfirmClearModal();
+                    document.getElementById('configDrawer').classList.add('hidden');
+                    document.getElementById('exportMenu').classList.add('hidden');
+                    if (isInput) e.target.blur();
+                    return;
+                }
+
+                if (!isInput) {
+                    if (e.key === 'n' || e.key === 'N') {
+                        e.preventDefault();
+                        openActivityModal();
+                    } else if (e.key === 'f' || e.key === 'F') {
+                        e.preventDefault();
+                        autoFillFreeSlots();
+                    } else if (e.key === '/') {
+                        e.preventDefault();
+                        const searchInput = document.getElementById('scheduleSearchInput');
+                        if (searchInput) searchInput.focus();
+                    }
                 }
             });
         });
@@ -690,17 +939,19 @@
                     const parsed = JSON.parse(raw);
                     if (parsed && parsed.config && parsed.categories && Array.isArray(parsed.activities)) {
                         appState = parsed;
-                        // Ensure Free Slot and Lunch Break categories always exist
+                        if (!appState.config.timeFormat) appState.config.timeFormat = '12h';
+                        if (!appState.config.density) appState.config.density = 'comfortable';
+
+                        // Ensure required categories exist
                         if (!appState.categories.some(c => c.id === 'cat_free')) {
-                            appState.categories.push({ id: 'cat_free', name: 'Free Slot', color: '#64748b', isBreak: false, isFree: true });
+                            appState.categories.push({ id: 'cat_free', name: 'Free Slot', color: '#6c757d', isBreak: false, isFree: true });
                         }
                         if (!appState.categories.some(c => c.id === 'cat_lunch')) {
-                            appState.categories.push({ id: 'cat_lunch', name: 'Lunch Break', color: '#d97706', isBreak: true, isFree: false });
+                            appState.categories.push({ id: 'cat_lunch', name: 'Lunch Break', color: '#946b54', isBreak: true, isFree: false });
                         }
                         return;
                     }
                 }
-                // First time visitor: Load sample schedule so the app looks rich and intuitive immediately
                 populateInitialSampleData();
             } catch (e) {
                 console.error('Error loading from storage:', e);
@@ -715,29 +966,31 @@
                 dayEnd: '17:00',
                 slotDuration: 60,
                 lunchStart: '13:00',
-                lunchEnd: '14:00'
+                lunchEnd: '14:00',
+                timeFormat: '12h',
+                density: 'comfortable'
             };
             appState.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
             appState.activities = [
-                // Lectures
-                { id: 'samp_1', day: 'Monday', startTime: '09:00', endTime: '11:00', title: 'CS301: Data Structures & Algorithms', categoryId: 'cat_lecture', location: 'Lecture Hall B', notes: 'Core Batch A' },
-                { id: 'samp_2', day: 'Wednesday', startTime: '09:00', endTime: '11:00', title: 'CS301: Data Structures & Algorithms', categoryId: 'cat_lecture', location: 'Lecture Hall B', notes: 'Core Batch A' },
+                // Academic Lectures
+                { id: 'samp_1', day: 'Monday', startTime: '09:00', endTime: '11:00', title: 'CS301: Data Structures & Algorithms', categoryId: 'cat_lecture', location: 'Hall B', notes: 'Core Batch A' },
+                { id: 'samp_2', day: 'Wednesday', startTime: '09:00', endTime: '11:00', title: 'CS301: Data Structures & Algorithms', categoryId: 'cat_lecture', location: 'Hall B', notes: 'Core Batch A' },
                 { id: 'samp_3', day: 'Tuesday', startTime: '10:00', endTime: '12:00', title: 'MA204: Linear Algebra & Optimization', categoryId: 'cat_lecture', location: 'Room 204', notes: 'Prof. Verma' },
                 { id: 'samp_4', day: 'Thursday', startTime: '10:00', endTime: '12:00', title: 'MA204: Linear Algebra & Optimization', categoryId: 'cat_lecture', location: 'Room 204', notes: 'Prof. Verma' },
-                // Labs
-                { id: 'samp_5', day: 'Tuesday', startTime: '14:00', endTime: '17:00', title: 'Systems Programming Lab', categoryId: 'cat_lab', location: 'Comp Lab 3', notes: 'Practical Session' },
-                { id: 'samp_6', day: 'Friday', startTime: '14:00', endTime: '16:00', title: 'AI & Machine Learning Seminar', categoryId: 'cat_research', location: 'Seminar Room 1', notes: 'Paper Reading Group' },
-                // Study, Quiet, Revision, Relax
-                { id: 'samp_7', day: 'Monday', startTime: '11:00', endTime: '13:00', title: 'Deep Study: Problem Sets', categoryId: 'cat_study', location: 'Central Library', notes: 'No phone zone' },
-                { id: 'samp_8', day: 'Wednesday', startTime: '14:00', endTime: '16:00', title: 'Thesis Literature Review', categoryId: 'cat_research', location: 'Research Cubicle', notes: 'Drafting section 2' },
-                { id: 'samp_9', day: 'Thursday', startTime: '14:00', endTime: '15:00', title: 'Quiet Reading & Journaling', categoryId: 'cat_quiet', location: 'Reading Room', notes: 'Mental clarity' },
-                { id: 'samp_10', day: 'Friday', startTime: '09:00', endTime: '11:00', title: 'Weekly Concept Revision', categoryId: 'cat_revision', location: 'Study Desk', notes: 'Review Mon-Thu notes' },
-                { id: 'samp_11', day: 'Saturday', startTime: '09:00', endTime: '12:00', title: 'Research Project & Coding', categoryId: 'cat_research', location: 'Innovation Lab', notes: 'Prototype sprint' },
-                { id: 'samp_12', day: 'Monday', startTime: '16:00', endTime: '17:00', title: 'Campus Walk & Coffee', categoryId: 'cat_relax', location: 'Botanical Trail', notes: 'Unwind' },
-                { id: 'samp_13', day: 'Thursday', startTime: '16:00', endTime: '17:00', title: 'Badminton / Gym Session', categoryId: 'cat_relax', location: 'Sports Complex', notes: 'Cardio' }
+                // Practical Lab & Research
+                { id: 'samp_5', day: 'Tuesday', startTime: '14:00', endTime: '17:00', title: 'Systems Programming Lab', categoryId: 'cat_lab', location: 'Lab 3', notes: 'Linux Kernel & C' },
+                { id: 'samp_6', day: 'Friday', startTime: '14:00', endTime: '16:00', title: 'AI & Machine Learning Seminar', categoryId: 'cat_research', location: 'Seminar Hall', notes: 'Paper Reading' },
+                // Study & Revision
+                { id: 'samp_7', day: 'Monday', startTime: '11:00', endTime: '13:00', title: 'Deep Study: Problem Sets', categoryId: 'cat_study', location: 'Central Library', notes: 'Algorithm proofs' },
+                { id: 'samp_8', day: 'Wednesday', startTime: '14:00', endTime: '16:00', title: 'Thesis Literature Review', categoryId: 'cat_research', location: 'Research Cubicle', notes: 'Section 2 notes' },
+                { id: 'samp_9', day: 'Thursday', startTime: '14:00', endTime: '15:00', title: 'Quiet Reading & Journaling', categoryId: 'cat_quiet', location: 'Reading Room', notes: 'Focus time' },
+                { id: 'samp_10', day: 'Friday', startTime: '09:00', endTime: '11:00', title: 'Weekly Concept Revision', categoryId: 'cat_revision', location: 'Desk', notes: 'Consolidate notes' },
+                { id: 'samp_11', day: 'Saturday', startTime: '09:00', endTime: '12:00', title: 'Research Project & Coding', categoryId: 'cat_research', location: 'Lab 1', notes: 'Prototype sprint' },
+                { id: 'samp_12', day: 'Monday', startTime: '16:00', endTime: '17:00', title: 'Campus Walk & Coffee', categoryId: 'cat_relax', location: 'Courtyard', notes: 'Unwind' },
+                { id: 'samp_13', day: 'Thursday', startTime: '16:00', endTime: '17:00', title: 'Badminton / Gym Session', categoryId: 'cat_relax', location: 'Sports Center', notes: 'Recharge' }
             ];
 
-            // Add Lunch across all active days
+            // Mandatory lunch across active days
             appState.config.activeDays.forEach((day, idx) => {
                 appState.activities.push({
                     id: 'samp_lunch_' + idx,
@@ -747,7 +1000,7 @@
                     title: 'Lunch Break',
                     categoryId: 'cat_lunch',
                     location: 'Dining Hall',
-                    notes: '30m+ Mandatory Rest'
+                    notes: 'Mandatory daily rest'
                 });
             });
 
@@ -755,17 +1008,18 @@
         }
 
         /**************************************************************
-         * 4. RENDER PIPELINE (GRID, ANALYTICS, CATEGORIES)
+         * 4. RENDER PIPELINE
          **************************************************************/
         function renderAll() {
             document.getElementById('scheduleTitleInput').value = appState.meta.title || 'Academic Timetable';
             document.getElementById('scheduleSubtitleInput').value = appState.meta.subtitle || '';
             document.getElementById('headerTimeRangeBadge').textContent = 
-                `${formatTime12h(appState.config.dayStart)} – ${formatTime12h(appState.config.dayEnd)} (${appState.config.slotDuration}m grid)`;
+                `${formatTimeDisplay(appState.config.dayStart)} – ${formatTimeDisplay(appState.config.dayEnd)} (${appState.config.slotDuration}m grid)`;
 
             renderCategoryManager();
             renderTimetableGrid();
             renderAnalyticsAndLegend();
+            applyActiveFiltersToDOM();
             saveToStorage();
         }
 
@@ -775,18 +1029,66 @@
             saveToStorage();
         }
 
-        // Render Configuration Panel Inputs
+        function updateTimeFormatUI() {
+            const badge = document.getElementById('timeFormatBadge');
+            if (badge) {
+                badge.textContent = appState.config.timeFormat === '24h' ? '24H' : '12H';
+            }
+            const densityBtn = document.getElementById('densityToggleBtn');
+            if (densityBtn) {
+                densityBtn.textContent = appState.config.density === 'compact' ? 'Compact' : 'Comfortable';
+            }
+        }
+
+        function toggleTimeFormat() {
+            appState.config.timeFormat = appState.config.timeFormat === '24h' ? '12h' : '24h';
+            updateTimeFormatUI();
+            renderAll();
+            showToast(`Time format switched to ${appState.config.timeFormat.toUpperCase()}`, 'info');
+        }
+
+        function toggleDensity() {
+            appState.config.density = appState.config.density === 'compact' ? 'comfortable' : 'compact';
+            updateTimeFormatUI();
+            renderAll();
+            showToast(`Grid density: ${appState.config.density}`, 'info');
+        }
+
+        /**************************************************************
+         * 5. SETTINGS DRAWER & CONFIG PANEL UI
+         **************************************************************/
+        function toggleConfigDrawer() {
+            const drawer = document.getElementById('configDrawer');
+            drawer.classList.toggle('hidden');
+        }
+
+        function switchConfigTab(tabId) {
+            ['grid', 'lunch', 'categories'].forEach(t => {
+                const content = document.getElementById('tabContent-' + t);
+                const btn = document.getElementById('tabBtn-' + t);
+                if (content && btn) {
+                    if (t === tabId) {
+                        content.classList.remove('hidden');
+                        btn.className = 'px-3 py-1 rounded-md bg-white text-slate-800 shadow-2xs font-semibold transition';
+                    } else {
+                        content.classList.add('hidden');
+                        btn.className = 'px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium transition';
+                    }
+                }
+            });
+        }
+
         function initConfigPanelUI() {
             const daysContainer = document.getElementById('daysCheckboxContainer');
             daysContainer.innerHTML = '';
             ALL_DAYS.forEach(day => {
                 const checked = appState.config.activeDays.includes(day);
                 const label = document.createElement('label');
-                label.className = `px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5 ${
-                    checked ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+                label.className = `px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer border transition select-none flex items-center gap-1.5 ${
+                    checked ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`;
                 label.innerHTML = `
-                    <input type="checkbox" value="${day}" ${checked ? 'checked' : ''} class="hidden" onchange="toggleDayCheckbox(this)">
+                    <input type="checkbox" value="${day}" ${checked ? 'checked' : ''} class="hidden" onchange="syncDayCheckboxStyles()">
                     <span>${day.slice(0, 3)}</span>
                 `;
                 daysContainer.appendChild(label);
@@ -810,20 +1112,30 @@
             }
         }
 
-        function toggleDayCheckbox(checkbox) {
-            initConfigPanelUI_SyncCheckboxStyles();
-        }
-
-        function initConfigPanelUI_SyncCheckboxStyles() {
+        function syncDayCheckboxStyles() {
             const container = document.getElementById('daysCheckboxContainer');
             Array.from(container.querySelectorAll('label')).forEach(lbl => {
                 const cb = lbl.querySelector('input');
                 if (cb.checked) {
-                    lbl.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5 bg-indigo-600 text-white border-indigo-600 shadow-xs';
+                    lbl.className = 'px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer border transition select-none flex items-center gap-1.5 bg-slate-900 text-white border-slate-900 shadow-2xs';
                 } else {
-                    lbl.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5 bg-white text-slate-600 border-slate-300 hover:bg-slate-100';
+                    lbl.className = 'px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer border transition select-none flex items-center gap-1.5 bg-white text-slate-600 border-slate-200 hover:bg-slate-100';
                 }
             });
+        }
+
+        function quickSelectDays(type) {
+            const container = document.getElementById('daysCheckboxContainer');
+            Array.from(container.querySelectorAll('label')).forEach(lbl => {
+                const cb = lbl.querySelector('input');
+                const val = cb.value;
+                if (type === 'all') {
+                    cb.checked = true;
+                } else if (type === 'weekdays') {
+                    cb.checked = !['Saturday', 'Sunday'].includes(val);
+                }
+            });
+            syncDayCheckboxStyles();
         }
 
         function handleSlotPresetChange() {
@@ -867,7 +1179,6 @@
             appState.config.dayEnd = endVal;
             appState.config.slotDuration = slotMins;
 
-            // Prune or clip activities that fall outside new start/end boundaries
             const minBound = timeToMinutes(startVal);
             const maxBound = timeToMinutes(endVal);
             appState.activities = appState.activities.filter(act => {
@@ -885,7 +1196,7 @@
         }
 
         /**************************************************************
-         * 5. MANDATORY DAILY LUNCH BREAK LOGIC (MIN 30 MINS)
+         * 6. MANDATORY LUNCH BREAK LOGIC
          **************************************************************/
         function applyLunchToAllDays() {
             const lunchStart = document.getElementById('cfgLunchStart').value;
@@ -919,11 +1230,9 @@
                     return aStart < eMins && aEnd > sMins;
                 });
 
-                // Overwrite if user checked overwrite OR if the only overlapping block is a "Free Slot" or old "Lunch Break"
                 const onlyFreeOrLunch = overlapping.every(a => a.categoryId === 'cat_free' || a.categoryId === 'cat_lunch');
 
                 if (overlapping.length === 0 || overwrite || onlyFreeOrLunch) {
-                    // Remove or trim overlapping activities
                     resolveActivityOverlaps(day, sMins, eMins);
                     appState.activities.push({
                         id: 'lunch_' + day + '_' + Date.now(),
@@ -933,7 +1242,7 @@
                         title: 'Lunch Break',
                         categoryId: 'cat_lunch',
                         location: 'Dining / Break Area',
-                        notes: `${eMins - sMins}m Daily Break`
+                        notes: `${eMins - sMins}m daily break`
                     });
                     appliedCount++;
                 }
@@ -941,14 +1250,14 @@
 
             renderAll();
             if (appliedCount > 0) {
-                showToast(`Lunch Break (${lunchStart}–${lunchEnd}) applied to ${appliedCount} day(s).`, 'success');
+                showToast(`Lunch Break (${formatTimeDisplay(lunchStart)}–${formatTimeDisplay(lunchEnd)}) applied to ${appliedCount} day(s).`, 'success');
             } else {
                 showToast('Lunch window had existing classes. Check "Overwrite" to replace them.', 'info');
             }
         }
 
         /**************************************************************
-         * 6. USER-DEFINED CATEGORIES MANAGER
+         * 7. CATEGORIES & COLOR MANAGEMENT
          **************************************************************/
         function getCategoryById(catId) {
             return appState.categories.find(c => c.id === catId) || appState.categories[0];
@@ -961,18 +1270,28 @@
             appState.categories.forEach(cat => {
                 const isProtected = cat.id === 'cat_free' || cat.id === 'cat_lunch';
                 const badge = document.createElement('div');
-                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border shadow-2xs';
-                badge.style.backgroundColor = hexToRGBA(cat.color, 0.12);
-                badge.style.borderColor = hexToRGBA(cat.color, 0.4);
-                badge.style.color = cat.color;
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-white shadow-2xs';
+                badge.style.borderColor = hexToRGBA(cat.color, 0.35);
 
                 badge.innerHTML = `
+                    <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${cat.color}"></span>
                     <input type="color" value="${cat.color}" onchange="updateCategoryColor('${cat.id}', this.value)" class="w-3.5 h-3.5 rounded-full border-0 cursor-pointer bg-transparent p-0" title="Change color">
-                    <span>${escapeHtml(cat.name)}</span>
-                    ${!isProtected ? `<button onclick="deleteCategory('${cat.id}')" class="ml-1 hover:text-rose-600 transition" title="Delete category"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                    <span class="text-slate-800">${escapeHtml(cat.name)}</span>
+                    ${!isProtected ? `<button onclick="deleteCategory('${cat.id}')" class="ml-1 text-slate-400 hover:text-rose-600 transition" title="Delete category"><i class="fa-solid fa-xmark text-[11px]"></i></button>` : ''}
                 `;
                 container.appendChild(badge);
             });
+        }
+
+        function restoreMinimalistPalette() {
+            DEFAULT_CATEGORIES.forEach(def => {
+                const existing = appState.categories.find(c => c.id === def.id);
+                if (existing) {
+                    existing.color = def.color;
+                }
+            });
+            renderAll();
+            showToast('Restored calm minimalist palette!', 'success');
         }
 
         function addNewCategory() {
@@ -981,7 +1300,7 @@
             const name = nameInput.value.trim();
 
             if (!name) {
-                showToast('Please enter a category name (e.g., Quiet Time, Mentoring).', 'error');
+                showToast('Please enter a category name.', 'error');
                 return;
             }
             if (appState.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
@@ -995,7 +1314,7 @@
             appState.categories.push({
                 id: 'cat_' + Date.now(),
                 name: name,
-                color: colorInput.value || '#6366f1',
+                color: colorInput.value || '#435585',
                 isBreak: isBreak,
                 isFree: false
             });
@@ -1019,7 +1338,6 @@
                 return;
             }
             appState.categories = appState.categories.filter(c => c.id !== catId);
-            // Reassign any orphaned activities to Free Slot
             appState.activities.forEach(a => {
                 if (a.categoryId === catId) a.categoryId = 'cat_free';
             });
@@ -1028,7 +1346,7 @@
         }
 
         /**************************************************************
-         * 7. SMART SLOT FINDER ("FILL EMPTY SLOTS AS FREE")
+         * 8. SMART SLOT FINDER ("FILL EMPTY AS FREE SLOTS")
          **************************************************************/
         function autoFillFreeSlots() {
             const slots = generateTimeSlots();
@@ -1063,8 +1381,8 @@
                                 endTime: minutesToTime(currentFreeEnd),
                                 title: 'Free Slot',
                                 categoryId: 'cat_free',
-                                location: 'Flexible / Unassigned',
-                                notes: 'Click to assign Study, Quiet, or Relax time'
+                                location: 'Flexible Time',
+                                notes: 'Click to plan Study, Research, or Rest'
                             });
                             createdBlocks++;
                             totalFreeMinutesAdded += (currentFreeEnd - currentFreeStart);
@@ -1082,8 +1400,8 @@
                         endTime: minutesToTime(currentFreeEnd),
                         title: 'Free Slot',
                         categoryId: 'cat_free',
-                        location: 'Flexible / Unassigned',
-                        notes: 'Click to assign Study, Quiet, or Relax time'
+                        location: 'Flexible Time',
+                        notes: 'Click to plan Study, Research, or Rest'
                     });
                     createdBlocks++;
                     totalFreeMinutesAdded += (currentFreeEnd - currentFreeStart);
@@ -1092,9 +1410,9 @@
 
             renderAll();
             if (createdBlocks > 0) {
-                showToast(`Smart Slot Finder filled ${createdBlocks} gap(s) (${formatHoursDisplay(totalFreeMinutesAdded)} free time) ready to manage!`, 'success');
+                showToast(`Filled ${createdBlocks} unassigned gap(s) (${formatHoursDisplay(totalFreeMinutesAdded)} free time) ready to plan!`, 'success');
             } else {
-                showToast('All slots are already assigned or marked as Free Slots!', 'info');
+                showToast('All slots are already assigned or marked as Free Slots.', 'info');
             }
         }
 
@@ -1107,7 +1425,7 @@
         }
 
         /**************************************************************
-         * 8. RENDER 2D INTERACTIVE TIMETABLE GRID
+         * 9. 2D INTERACTIVE TIMETABLE GRID RENDERING
          **************************************************************/
         function renderTimetableGrid() {
             const theadRow = document.getElementById('timetableHeaderRow');
@@ -1115,20 +1433,28 @@
             const activeDays = appState.config.activeDays;
             const slots = generateTimeSlots();
 
-            // 1. Render Header Columns (Time + Active Days)
+            // Detect today's day of week
+            const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+            // 1. Header Columns
             theadRow.innerHTML = `
-                <th class="w-28 sm:w-32 py-3.5 px-3 text-left text-xs font-bold uppercase tracking-wider text-slate-300 border-r border-slate-800">
-                    <i class="fa-regular fa-clock mr-1 text-indigo-400"></i> Time Slot
+                <th class="w-24 sm:w-28 py-3 px-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 border-r border-slate-200/80 bg-slate-50 sticky left-0 z-20">
+                    <span class="flex items-center gap-1.5"><i class="fa-regular fa-clock text-slate-400"></i> Time</span>
                 </th>
             `;
+
             activeDays.forEach(day => {
-                // Calculate free hours on this specific day for header badge
                 const dayFreeMins = calculateDayFreeMinutes(day, slots);
+                const isToday = day === todayName;
+
                 theadRow.innerHTML += `
-                    <th class="py-3 px-3 text-left border-r border-slate-800 last:border-r-0">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-bold tracking-wide text-white">${day}</span>
-                            <span class="text-[11px] font-medium px-2 py-0.5 rounded-full ${dayFreeMins > 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-300'}">
+                    <th class="py-2.5 px-3 text-left border-r border-slate-200/80 last:border-r-0 ${isToday ? 'bg-slate-100/60' : 'bg-slate-50'}">
+                        <div class="flex items-center justify-between gap-1">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs sm:text-sm font-bold text-slate-900">${day}</span>
+                                ${isToday ? '<span class="text-[9px] font-semibold bg-slate-900 text-white px-1.5 py-0.2 rounded-full uppercase tracking-wider">Today</span>' : ''}
+                            </div>
+                            <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-full ${dayFreeMins > 0 ? 'bg-slate-100 text-slate-600' : 'text-slate-400'}">
                                 ${formatHoursDisplay(dayFreeMins)} free
                             </span>
                         </div>
@@ -1136,30 +1462,31 @@
                 `;
             });
 
-            // 2. Render Time Slot Rows with Rowspan support for multi-slot activities
+            // 2. Body Rows with Rowspan support
             tbody.innerHTML = '';
-            const skipMatrix = {}; // key: `${day}_${rowIndex}`
+            const skipMatrix = {};
+            const isCompact = appState.config.density === 'compact';
+            const cellMinHeight = isCompact ? 'min-h-[46px]' : 'min-h-[58px]';
 
             slots.forEach((slot, rowIndex) => {
                 const tr = document.createElement('tr');
-                tr.className = 'group hover:bg-slate-50/60 transition';
+                tr.className = 'group hover:bg-slate-50/40 transition';
 
-                // Time Column Cell
+                // Time Column Cell (Sticky on mobile horizontal scroll)
                 const timeTd = document.createElement('td');
-                timeTd.className = 'py-2.5 px-3 align-top bg-slate-50/90 border-r border-slate-200 text-xs font-semibold text-slate-600 select-none';
+                timeTd.className = 'py-2 px-3 align-top bg-white border-r border-slate-200/80 text-xs font-semibold text-slate-600 sticky left-0 z-10 tabular-nums select-none';
                 timeTd.innerHTML = `
-                    <div class="text-slate-800 font-bold">${slot.start}</div>
-                    <div class="text-[11px] text-slate-400">to ${slot.end}</div>
+                    <div class="text-slate-800 font-bold">${formatTimeDisplay(slot.start)}</div>
+                    <div class="text-[10px] text-slate-400 font-normal">to ${formatTimeDisplay(slot.end)}</div>
                 `;
                 tr.appendChild(timeTd);
 
                 // Day Cells
                 activeDays.forEach(day => {
                     if (skipMatrix[`${day}_${rowIndex}`]) {
-                        return; // Covered by a rowspan from an earlier slot
+                        return;
                     }
 
-                    // Find activity starting in or covering this slot
                     const act = appState.activities.find(a => {
                         if (a.day !== day) return false;
                         const aStart = timeToMinutes(a.startTime);
@@ -1168,10 +1495,9 @@
                     });
 
                     const td = document.createElement('td');
-                    td.className = 'p-1.5 border-r border-slate-200 last:border-r-0 align-top relative';
+                    td.className = 'p-1 border-r border-slate-200/80 last:border-r-0 align-top relative';
 
                     if (act) {
-                        // Compute how many slot rows this activity spans
                         let spanCount = 1;
                         const actEndMins = timeToMinutes(act.endTime);
                         for (let nextIdx = rowIndex + 1; nextIdx < slots.length; nextIdx++) {
@@ -1191,56 +1517,72 @@
                         const durationMins = timeToMinutes(act.endTime) - timeToMinutes(act.startTime);
 
                         const card = document.createElement('div');
-                        card.onclick = () => openActivityModal({ activityId: act.id });
-                        card.className = `timetable-cell h-full min-h-[60px] w-full rounded-xl p-2.5 cursor-pointer flex flex-col justify-between border-l-4 shadow-2xs ${isFreeBlock ? 'free-slot-pattern border-dashed border' : ''}`;
+                        card.dataset.activityId = act.id;
+                        card.dataset.categoryId = act.categoryId;
+                        card.dataset.searchContent = `${act.title} ${cat.name} ${act.location || ''} ${act.notes || ''}`.toLowerCase();
+                        card.className = `timetable-cell h-full ${cellMinHeight} w-full rounded-xl p-2.5 cursor-pointer flex flex-col justify-between border ${isFreeBlock ? 'free-slot-zen' : 'bg-white shadow-2xs'}`;
                         
                         if (isFreeBlock) {
-                            card.style.backgroundColor = '#f8fafc';
-                            card.style.borderColor = '#94a3b8';
-                            card.style.borderLeftColor = '#10b981';
-                            card.style.borderLeftWidth = '4px';
+                            card.style.borderLeft = '3px dashed #64748b';
                         } else {
-                            card.style.backgroundColor = hexToRGBA(cat.color, 0.13);
-                            card.style.borderColor = hexToRGBA(cat.color, 0.3);
-                            card.style.borderLeftColor = cat.color;
+                            card.style.backgroundColor = hexToRGBA(cat.color, 0.08);
+                            card.style.borderColor = hexToRGBA(cat.color, 0.22);
+                            card.style.borderLeft = `3.5px solid ${cat.color}`;
                         }
+
+                        card.onclick = (e) => {
+                            // Don't trigger if clicked on hover action buttons
+                            if (e.target.closest('.action-stop-prop')) return;
+                            openActivityModal({ activityId: act.id });
+                        };
 
                         card.innerHTML = `
                             <div>
                                 <div class="flex items-start justify-between gap-1 mb-1">
-                                    <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                                          style="background-color: ${isFreeBlock ? '#d1fae5' : hexToRGBA(cat.color, 0.22)}; color: ${isFreeBlock ? '#047857' : cat.color}">
+                                    <span class="inline-flex items-center text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded"
+                                          style="background-color: ${isFreeBlock ? '#e2e8f0' : hexToRGBA(cat.color, 0.16)}; color: ${isFreeBlock ? '#475569' : cat.color}">
                                         ${escapeHtml(cat.name)}
                                     </span>
-                                    <span class="text-[10px] font-semibold text-slate-500 shrink-0">${formatHoursDisplay(durationMins)}</span>
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[10px] font-medium text-slate-400 tabular-nums shrink-0">${formatHoursDisplay(durationMins)}</span>
+                                        <!-- Quick hover action buttons -->
+                                        <div class="cell-hover-actions action-stop-prop flex items-center gap-0.5 bg-white/90 backdrop-blur-xs px-1 py-0.5 rounded shadow-xs border border-slate-200">
+                                            <button type="button" onclick="openActivityModal({ activityId: '${act.id}' })" class="text-slate-500 hover:text-slate-800 p-0.5" title="Edit slot">
+                                                <i class="fa-solid fa-pen text-[9px]"></i>
+                                            </button>
+                                            <button type="button" onclick="quickDeleteActivity('${act.id}')" class="text-slate-400 hover:text-rose-600 p-0.5" title="Remove slot">
+                                                <i class="fa-solid fa-trash-can text-[9px]"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="font-bold text-xs sm:text-sm leading-snug ${isFreeBlock ? 'text-emerald-800' : 'text-slate-900'}">
+                                <div class="font-bold text-xs sm:text-[13px] leading-snug ${isFreeBlock ? 'text-slate-700' : 'text-slate-900'}">
                                     ${escapeHtml(act.title)}
                                 </div>
                                 ${act.location ? `
-                                    <div class="text-[11px] text-slate-600 mt-1 flex items-center gap-1">
-                                        <i class="fa-solid fa-location-dot text-[10px] opacity-70"></i>
-                                        <span class="truncate">${escapeHtml(act.location)}</span>
+                                    <div class="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1 truncate">
+                                        <i class="fa-solid fa-location-dot text-[9px] opacity-60"></i>
+                                        <span>${escapeHtml(act.location)}</span>
                                     </div>
                                 ` : ''}
                             </div>
-                            <div class="mt-2 pt-1 border-t border-black/5 flex items-center justify-between text-[10px] text-slate-500">
-                                <span>${act.startTime} – ${act.endTime}</span>
-                                ${act.notes ? `<span class="truncate max-w-[110px] italic" title="${escapeHtml(act.notes)}">${escapeHtml(act.notes)}</span>` : ''}
+                            <div class="mt-1.5 pt-1 border-t border-black/5 flex items-center justify-between text-[10px] text-slate-400 tabular-nums">
+                                <span>${formatTimeDisplay(act.startTime)} – ${formatTimeDisplay(act.endTime)}</span>
+                                ${act.notes ? `<span class="truncate max-w-[100px] text-slate-500" title="${escapeHtml(act.notes)}">${escapeHtml(act.notes)}</span>` : ''}
                             </div>
                         `;
                         td.appendChild(card);
                     } else {
-                        // Empty Unassigned Slot
+                        // Empty slot button
                         const emptyBtn = document.createElement('button');
                         emptyBtn.type = 'button';
                         emptyBtn.onclick = () => openActivityModal({ day: day, startTime: slot.start, endTime: slot.end });
-                        emptyBtn.className = 'w-full h-full min-h-[60px] rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 transition flex flex-col items-center justify-center p-2 group/btn text-center';
+                        emptyBtn.className = `empty-slot-btn w-full h-full ${cellMinHeight} rounded-xl p-1.5 flex flex-col items-center justify-center text-center group/btn`;
                         emptyBtn.innerHTML = `
-                            <span class="text-[11px] font-medium text-slate-400 group-hover/btn:text-indigo-600 transition flex items-center gap-1">
-                                <i class="fa-solid fa-plus text-[10px]"></i> Free (${slot.duration}m)
+                            <span class="plus-indicator text-[11px] font-medium text-slate-500 flex items-center gap-1">
+                                <i class="fa-solid fa-plus text-[10px] text-slate-400"></i> Add
                             </span>
-                            <span class="text-[10px] text-slate-300 group-hover/btn:text-indigo-400 hidden sm:inline">Click to assign</span>
+                            <span class="text-[10px] text-slate-300 font-normal group-hover/btn:hidden">Free</span>
                         `;
                         td.appendChild(emptyBtn);
                     }
@@ -1273,15 +1615,101 @@
             return freeMins;
         }
 
+        function quickDeleteActivity(actId) {
+            appState.activities = appState.activities.filter(a => a.id !== actId);
+            renderAll();
+            showToast('Slot removed.', 'info');
+        }
+
         /**************************************************************
-         * 9. LIVE ANALYTICS & HOURS BREAKDOWN
+         * 10. REALTIME SEARCH & CATEGORY FILTERING
+         **************************************************************/
+        function handleSearchFilter(query) {
+            currentSearchQuery = (query || '').trim().toLowerCase();
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const banner = document.getElementById('searchFilterBanner');
+            const bannerText = document.getElementById('searchFilterText');
+
+            if (currentSearchQuery) {
+                if (clearBtn) clearBtn.classList.remove('hidden');
+                if (banner && bannerText) {
+                    banner.classList.remove('hidden');
+                    bannerText.textContent = `Showing results matching "${query}"`;
+                }
+            } else {
+                if (clearBtn) clearBtn.classList.add('hidden');
+                if (banner) banner.classList.add('hidden');
+            }
+
+            applyActiveFiltersToDOM();
+        }
+
+        function clearSearchFilter() {
+            const input = document.getElementById('scheduleSearchInput');
+            if (input) input.value = '';
+            handleSearchFilter('');
+        }
+
+        function setCategoryFilter(categoryId) {
+            if (currentActiveCategoryFilter === categoryId) {
+                clearCategoryFilter();
+                return;
+            }
+            currentActiveCategoryFilter = categoryId;
+            const cat = getCategoryById(categoryId);
+            const pill = document.getElementById('activeFilterPill');
+            const pillName = document.getElementById('activeFilterName');
+            if (pill && pillName) {
+                pill.classList.remove('hidden');
+                pillName.textContent = cat.name;
+            }
+            applyActiveFiltersToDOM();
+        }
+
+        function clearCategoryFilter() {
+            currentActiveCategoryFilter = null;
+            const pill = document.getElementById('activeFilterPill');
+            if (pill) pill.classList.add('hidden');
+            applyActiveFiltersToDOM();
+        }
+
+        function applyActiveFiltersToDOM() {
+            const cards = document.querySelectorAll('.timetable-cell');
+            cards.forEach(card => {
+                const actCategory = card.dataset.categoryId;
+                const searchContent = card.dataset.searchContent || '';
+
+                let matchCategory = true;
+                if (currentActiveCategoryFilter) {
+                    matchCategory = (actCategory === currentActiveCategoryFilter);
+                }
+
+                let matchSearch = true;
+                if (currentSearchQuery) {
+                    matchSearch = searchContent.includes(currentSearchQuery);
+                }
+
+                if (matchCategory && matchSearch) {
+                    card.classList.remove('slot-dimmed');
+                    if (currentActiveCategoryFilter || currentSearchQuery) {
+                        card.classList.add('slot-highlighted');
+                    } else {
+                        card.classList.remove('slot-highlighted');
+                    }
+                } else {
+                    card.classList.add('slot-dimmed');
+                    card.classList.remove('slot-highlighted');
+                }
+            });
+        }
+
+        /**************************************************************
+         * 11. ANALYTICS & HOURS BREAKDOWN
          **************************************************************/
         function renderAnalyticsAndLegend() {
-            const slots = generateTimeSlots();
             const dailyMins = timeToMinutes(appState.config.dayEnd) - timeToMinutes(appState.config.dayStart);
             const totalCapacityMins = dailyMins * appState.config.activeDays.length;
 
-            // Tally minutes per category across active days
             const categoryMinutes = {};
             appState.categories.forEach(c => categoryMinutes[c.id] = 0);
 
@@ -1309,15 +1737,13 @@
             const blankUnassignedMins = Math.max(0, totalCapacityMins - occupiedTotalMins);
             const totalFreeAvailableMins = blankUnassignedMins + explicitFreeSlotMins;
 
-            // Update Top Stat Cards
             document.getElementById('statTotalCapacity').textContent = formatHoursDisplay(totalCapacityMins);
             document.getElementById('statGridSummary').textContent = `${appState.config.activeDays.length} days × ${formatHoursDisplay(dailyMins)}/day`;
             document.getElementById('statScheduledHours').textContent = formatHoursDisplay(scheduledWorkMins);
             document.getElementById('statFreeHours').textContent = formatHoursDisplay(totalFreeAvailableMins);
-            document.getElementById('statFreeSlotsCount').textContent = `${formatHoursDisplay(explicitFreeSlotMins)} marked Free + ${formatHoursDisplay(blankUnassignedMins)} blank`;
+            document.getElementById('statFreeSlotsCount').textContent = `${formatHoursDisplay(explicitFreeSlotMins)} free + ${formatHoursDisplay(blankUnassignedMins)} blank`;
             document.getElementById('statBreakHours').textContent = formatHoursDisplay(breakAndRelaxMins);
 
-            // Render Progress Bar & Category Pills
             const progressBar = document.getElementById('categoryProgressBar');
             const pillsContainer = document.getElementById('categoryStatsPills');
             const legendContainer = document.getElementById('exportLegendContainer');
@@ -1328,44 +1754,50 @@
             appState.categories.forEach(cat => {
                 let mins = categoryMinutes[cat.id] || 0;
                 if (cat.id === 'cat_free') {
-                    mins = totalFreeAvailableMins; // Combine blank gaps + Free Slot blocks for clear visibility
+                    mins = totalFreeAvailableMins;
                 }
                 if (mins <= 0) return;
 
                 const pct = totalCapacityMins > 0 ? ((mins / totalCapacityMins) * 100).toFixed(1) : 0;
 
-                // Progress bar segment
+                // Progress Bar Segment
                 const seg = document.createElement('div');
                 seg.style.width = `${pct}%`;
-                seg.style.backgroundColor = cat.id === 'cat_free' ? '#10b981' : cat.color;
-                seg.title = `${cat.name}: ${formatHoursDisplay(mins)} (${pct}%)`;
+                seg.style.backgroundColor = cat.color;
+                seg.className = 'h-full transition-all duration-300 rounded-sm cursor-pointer';
+                seg.title = `${cat.name}: ${formatHoursDisplay(mins)} (${pct}%) — Click to filter`;
+                seg.onclick = () => setCategoryFilter(cat.id);
                 progressBar.appendChild(seg);
 
-                // Stat Pill
-                const pill = document.createElement('div');
-                pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-50 border border-slate-200';
+                // Filter Pill
+                const isSelected = currentActiveCategoryFilter === cat.id;
+                const pill = document.createElement('button');
+                pill.type = 'button';
+                pill.onclick = () => setCategoryFilter(cat.id);
+                pill.className = `inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium border transition ${
+                    isSelected ? 'bg-slate-900 text-white border-slate-900 shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                }`;
                 pill.innerHTML = `
-                    <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${cat.id === 'cat_free' ? '#10b981' : cat.color}"></span>
-                    <span class="text-slate-700 font-semibold">${escapeHtml(cat.name)}:</span>
-                    <span class="text-slate-900 font-bold">${formatHoursDisplay(mins)}</span>
-                    <span class="text-[10px] text-slate-400">(${pct}%)</span>
+                    <span class="w-2 h-2 rounded-full" style="background-color: ${cat.color}"></span>
+                    <span>${escapeHtml(cat.name)}:</span>
+                    <span class="font-bold tabular-nums">${formatHoursDisplay(mins)}</span>
+                    <span class="text-[10px] ${isSelected ? 'text-slate-300' : 'text-slate-400'}">(${pct}%)</span>
                 `;
                 pillsContainer.appendChild(pill);
 
-                // Mini Print Legend
+                // Print Legend Badge
                 const leg = document.createElement('span');
-                leg.className = 'inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded';
-                leg.innerHTML = `<span class="w-2 h-2 rounded-full" style="background-color: ${cat.id === 'cat_free' ? '#10b981' : cat.color}"></span> ${escapeHtml(cat.name)} (${formatHoursDisplay(mins)})`;
+                leg.className = 'inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded';
+                leg.innerHTML = `<span class="w-1.5 h-1.5 rounded-full" style="background-color: ${cat.color}"></span> ${escapeHtml(cat.name)} (${formatHoursDisplay(mins)})`;
                 legendContainer.appendChild(leg);
             });
 
-            // Printable bottom summary line
             document.getElementById('printableSummaryLine').textContent = 
-                `Weekly Summary: ${formatHoursDisplay(scheduledWorkMins)} Academic/Study • ${formatHoursDisplay(breakAndRelaxMins)} Lunch & Relax • ${formatHoursDisplay(totalFreeAvailableMins)} Free/Flexible Time Available`;
+                `Weekly Schedule: ${formatHoursDisplay(scheduledWorkMins)} Academic • ${formatHoursDisplay(breakAndRelaxMins)} Lunch & Rest • ${formatHoursDisplay(totalFreeAvailableMins)} Free Time Available`;
         }
 
         /**************************************************************
-         * 10. ADD / EDIT / SPLIT / DELETE ACTIVITY MODAL
+         * 12. ACTIVITY MODAL & CRUD
          **************************************************************/
         function openActivityModal(options = {}) {
             const modal = document.getElementById('activityModal');
@@ -1373,7 +1805,7 @@
             const deleteBtn = document.getElementById('btnDeleteActivity');
             const modalTitle = document.getElementById('modalHeaderTitle');
 
-            // Populate Category Dropdown
+            // Category options
             const catSelect = document.getElementById('actCategory');
             catSelect.innerHTML = '';
             appState.categories.forEach(c => {
@@ -1383,10 +1815,9 @@
                 catSelect.appendChild(opt);
             });
 
-            // Populate Start/End Time Dropdowns snapped to grid (plus 15m granularity flexibility)
             populateModalTimeSelects();
 
-            // Populate Days checkboxes inside modal
+            // Modal Days
             const daysContainer = document.getElementById('modalDaysCheckboxes');
             daysContainer.innerHTML = '';
 
@@ -1400,7 +1831,7 @@
             appState.config.activeDays.forEach(day => {
                 const isChecked = day === targetDay;
                 const lbl = document.createElement('label');
-                lbl.className = `px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5`;
+                lbl.className = `px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5`;
                 lbl.innerHTML = `
                     <input type="checkbox" name="modalDayCb" value="${day}" ${isChecked ? 'checked' : ''} class="hidden" onchange="syncModalDayPills()">
                     <span>${day.slice(0, 3)}</span>
@@ -1411,20 +1842,18 @@
 
             if (existingActivity) {
                 editingIdInput.value = existingActivity.id;
-                modalTitle.textContent = existingActivity.categoryId === 'cat_free' 
-                    ? 'Convert Free Slot to Activity' 
-                    : 'Edit Scheduled Slot';
+                modalTitle.textContent = existingActivity.categoryId === 'cat_free' ? 'Convert Free Slot' : 'Edit Slot Details';
                 document.getElementById('actTitle').value = existingActivity.categoryId === 'cat_free' ? '' : existingActivity.title;
-                document.getElementById('actTitle').placeholder = existingActivity.categoryId === 'cat_free' ? 'Enter Study, Quiet Time, Lecture...' : '';
+                document.getElementById('actTitle').placeholder = existingActivity.categoryId === 'cat_free' ? 'e.g., Deep Study, Seminar...' : '';
                 document.getElementById('actCategory').value = existingActivity.categoryId === 'cat_free' ? 'cat_study' : existingActivity.categoryId;
                 document.getElementById('actStartTime').value = existingActivity.startTime;
                 document.getElementById('actEndTime').value = existingActivity.endTime;
-                document.getElementById('actLocation').value = existingActivity.location === 'Flexible / Unassigned' ? '' : (existingActivity.location || '');
-                document.getElementById('actNotes').value = existingActivity.notes === 'Click to assign Study, Quiet, or Relax time' ? '' : (existingActivity.notes || '');
+                document.getElementById('actLocation').value = existingActivity.location === 'Flexible Time' ? '' : (existingActivity.location || '');
+                document.getElementById('actNotes').value = existingActivity.notes === 'Click to plan Study, Research, or Rest' ? '' : (existingActivity.notes || '');
                 deleteBtn.classList.remove('hidden');
             } else {
                 editingIdInput.value = '';
-                modalTitle.textContent = 'Assign New Academic or Relax Slot';
+                modalTitle.textContent = 'Assign New Activity Slot';
                 document.getElementById('actTitle').value = '';
                 document.getElementById('actCategory').value = 'cat_lecture';
                 const defaultStart = options.startTime || appState.config.dayStart;
@@ -1445,11 +1874,25 @@
             Array.from(container.querySelectorAll('label')).forEach(lbl => {
                 const cb = lbl.querySelector('input');
                 if (cb.checked) {
-                    lbl.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5 bg-indigo-600 text-white border-indigo-600 shadow-xs';
+                    lbl.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1 bg-slate-900 text-white border-slate-900 shadow-2xs';
                 } else {
-                    lbl.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1.5 bg-slate-50 text-slate-600 border-slate-300 hover:bg-slate-100';
+                    lbl.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition select-none flex items-center gap-1 bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100';
                 }
             });
+        }
+
+        function quickSelectModalDays(type) {
+            const container = document.getElementById('modalDaysCheckboxes');
+            Array.from(container.querySelectorAll('label')).forEach(lbl => {
+                const cb = lbl.querySelector('input');
+                const val = cb.value;
+                if (type === 'all') {
+                    cb.checked = true;
+                } else if (type === 'weekdays') {
+                    cb.checked = !['Saturday', 'Sunday'].includes(val);
+                }
+            });
+            syncModalDayPills();
         }
 
         function populateModalTimeSelects() {
@@ -1470,16 +1913,50 @@
                 if (idx < sortedTimes.length - 1) {
                     const optS = document.createElement('option');
                     optS.value = t;
-                    optS.textContent = `${t} (${formatTime12h(t)})`;
+                    optS.textContent = `${formatTimeDisplay(t)}`;
                     startSelect.appendChild(optS);
                 }
                 if (idx > 0) {
                     const optE = document.createElement('option');
                     optE.value = t;
-                    optE.textContent = `${t} (${formatTime12h(t)})`;
+                    optE.textContent = `${formatTimeDisplay(t)}`;
                     endSelect.appendChild(optE);
                 }
             });
+        }
+
+        function handleModalStartTimeChange() {
+            const startVal = document.getElementById('actStartTime').value;
+            const endSelect = document.getElementById('actEndTime');
+            const sMins = timeToMinutes(startVal);
+            const currentEndMins = timeToMinutes(endSelect.value);
+
+            if (currentEndMins <= sMins) {
+                const defaultStep = appState.config.slotDuration || 60;
+                const newEnd = minutesToTime(Math.min(sMins + defaultStep, timeToMinutes(appState.config.dayEnd)));
+                endSelect.value = newEnd;
+            }
+        }
+
+        function setModalDuration(minsDuration) {
+            const startVal = document.getElementById('actStartTime').value;
+            const sMins = timeToMinutes(startVal);
+            const maxBound = timeToMinutes(appState.config.dayEnd);
+            const targetEndMins = Math.min(sMins + minsDuration, maxBound);
+            const targetEndStr = minutesToTime(targetEndMins);
+
+            const endSelect = document.getElementById('actEndTime');
+            let found = false;
+            for (let i = 0; i < endSelect.options.length; i++) {
+                if (endSelect.options[i].value === targetEndStr) {
+                    endSelect.selectedIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                endSelect.value = targetEndStr;
+            }
         }
 
         function applyQuickPreset(title, catId) {
@@ -1493,46 +1970,39 @@
             document.getElementById('activityModal').classList.add('hidden');
         }
 
-        // Smart overlap resolution: splits or trims any existing block (like a multi-hour Free Slot) when assigning a sub-block
         function resolveActivityOverlaps(day, newStartMins, newEndMins, ignoreId = null) {
-            const updatedActivities = [];
-
+            const updated = [];
             appState.activities.forEach(act => {
-                if (act.id === ignoreId) return;
-                if (act.day !== day) {
-                    updatedActivities.push(act);
+                if (act.id === ignoreId || act.day !== day) {
+                    updated.push(act);
                     return;
                 }
 
                 const aStart = timeToMinutes(act.startTime);
                 const aEnd = timeToMinutes(act.endTime);
 
-                // No overlap
                 if (aEnd <= newStartMins || aStart >= newEndMins) {
-                    updatedActivities.push(act);
+                    updated.push(act);
                     return;
                 }
 
-                // If existing block extends before the new block, keep the leading portion
+                // Split or trim
                 if (aStart < newStartMins) {
-                    updatedActivities.push({
+                    updated.push({
                         ...act,
                         id: act.id + '_lead_' + Math.random().toString(36).slice(2, 5),
                         endTime: minutesToTime(newStartMins)
                     });
                 }
-
-                // If existing block extends after the new block, keep the trailing portion
                 if (aEnd > newEndMins) {
-                    updatedActivities.push({
+                    updated.push({
                         ...act,
                         id: act.id + '_trail_' + Math.random().toString(36).slice(2, 5),
                         startTime: minutesToTime(newEndMins)
                     });
                 }
             });
-
-            appState.activities = updatedActivities;
+            appState.activities = updated;
         }
 
         function saveActivityFromModal(e) {
@@ -1558,13 +2028,11 @@
                 return;
             }
 
-            // Enforce minimum 30 minutes if category is Lunch Break
             if (categoryId === 'cat_lunch' && (eMins - sMins) < 30) {
                 showToast('Lunch Break requires a minimum of 30 minutes.', 'error');
                 return;
             }
 
-            // If editing an existing activity, remove its original entry first
             if (editingId) {
                 appState.activities = appState.activities.filter(a => a.id !== editingId);
             }
@@ -1585,7 +2053,7 @@
 
             closeActivityModal();
             renderAll();
-            showToast(`Saved "${title}" to ${selectedDays.join(', ')}!`, 'success');
+            showToast(`Saved "${title}"!`, 'success');
         }
 
         function deleteCurrentActivity() {
@@ -1598,35 +2066,26 @@
         }
 
         /**************************************************************
-         * 11. EXPORT & PERSISTENCE (EXCEL 2D GRID, PDF, PNG, JSON)
+         * 13. EXPORTS & BACKUPS (EXCEL 2D, PDF, PNG, JSON, GITHUB ZIP)
          **************************************************************/
         function toggleExportMenu() {
             const menu = document.getElementById('exportMenu');
             menu.classList.toggle('hidden');
         }
 
-        function toggleConfigDrawer() {
-            const drawer = document.getElementById('configDrawer');
-            drawer.classList.toggle('hidden');
-        }
-
-        // 11A. 2D Visual Weekly Grid Excel Export (.xlsx) using SheetJS
         function exportToExcel() {
             document.getElementById('exportMenu').classList.add('hidden');
             try {
                 const slots = generateTimeSlots();
                 const activeDays = appState.config.activeDays;
 
-                // Sheet 1: 2D Visual Timetable Grid
                 const aoa = [];
                 aoa.push([appState.meta.title || 'Academic Timetable']);
                 aoa.push([appState.meta.subtitle || '', `Generated: ${new Date().toLocaleDateString()}`]);
-                aoa.push([]); // Blank separator row
+                aoa.push([]);
 
-                // Header Row
                 aoa.push(['Time Slot', ...activeDays]);
 
-                // Time Rows
                 slots.forEach(slot => {
                     const row = [`${slot.start} - ${slot.end}`];
                     activeDays.forEach(day => {
@@ -1654,7 +2113,6 @@
                 aoa.push(['CATEGORY ANALYTICS & HOURS SUMMARY']);
                 aoa.push(['Category Name', 'Total Weekly Hours', 'Total Minutes']);
 
-                // Calculate summary for Excel
                 const dailyMins = timeToMinutes(appState.config.dayEnd) - timeToMinutes(appState.config.dayStart);
                 const totalCapacityMins = dailyMins * activeDays.length;
                 let occupiedMins = 0;
@@ -1677,20 +2135,17 @@
 
                 const wb = XLSX.utils.book_new();
                 const wsGrid = XLSX.utils.aoa_to_sheet(aoa);
-
-                // Set generous column widths for readability
-                wsGrid['!cols'] = [{ wch: 18 }, ...activeDays.map(() => ({ wch: 30 }))];
+                wsGrid['!cols'] = [{ wch: 18 }, ...activeDays.map(() => ({ wch: 28 }))];
 
                 XLSX.utils.book_append_sheet(wb, wsGrid, 'Weekly Timetable 2D');
                 XLSX.writeFile(wb, 'Academic_Timetable_Schedule.xlsx');
                 showToast('Excel 2D Timetable (.xlsx) downloaded!', 'success');
             } catch (err) {
                 console.error(err);
-                showToast('Excel export failed. Please try again.', 'error');
+                showToast('Excel export failed.', 'error');
             }
         }
 
-        // 11B. High-Res PNG Image Export
         async function exportToPNG() {
             document.getElementById('exportMenu').classList.add('hidden');
             showToast('Rendering high-resolution timetable image...', 'info');
@@ -1712,10 +2167,9 @@
             }
         }
 
-        // 11C. Print-Ready Landscape PDF Export
         async function exportToPDF() {
             document.getElementById('exportMenu').classList.add('hidden');
-            showToast('Generating landscape PDF document...', 'info');
+            showToast('Generating landscape PDF...', 'info');
             try {
                 const element = document.getElementById('printableTimetableArea');
                 const canvas = await html2canvas(element, {
@@ -1728,7 +2182,7 @@
                 const jspdfLib = window.jspdf || window.jsPDF;
                 const jsPDFConstructor = jspdfLib && jspdfLib.jsPDF ? jspdfLib.jsPDF : jspdfLib;
                 if (!jsPDFConstructor) {
-                    throw new Error('jsPDF library not loaded yet.');
+                    throw new Error('jsPDF library not loaded.');
                 }
                 const pdf = new jsPDFConstructor('l', 'mm', 'a4');
                 const pageWidth = pdf.internal.pageSize.getWidth();
@@ -1759,7 +2213,6 @@
             }
         }
 
-        // 11D. JSON Template Export & Import
         function exportJSON() {
             document.getElementById('exportMenu').classList.add('hidden');
             const dataStr = JSON.stringify(appState, null, 2);
@@ -1770,7 +2223,7 @@
             a.download = 'chronos_timetable_template.json';
             a.click();
             URL.revokeObjectURL(url);
-            showToast('Schedule JSON template exported!', 'success');
+            showToast('Schedule template exported!', 'success');
         }
 
         function importJSON(event) {
@@ -1784,6 +2237,7 @@
                     if (imported && imported.config && Array.isArray(imported.categories) && Array.isArray(imported.activities)) {
                         appState = imported;
                         initConfigPanelUI();
+                        updateTimeFormatUI();
                         renderAll();
                         showToast('Timetable template restored successfully!', 'success');
                     } else {
@@ -1801,6 +2255,7 @@
             document.getElementById('exportMenu').classList.add('hidden');
             populateInitialSampleData();
             initConfigPanelUI();
+            updateTimeFormatUI();
             renderAll();
             showToast('Loaded sample college & research timetable!', 'success');
         }
@@ -1818,16 +2273,15 @@
             appState.activities = [];
             closeConfirmClearModal();
             renderAll();
-            showToast('Entire schedule cleared. Click any slot or "Fill Empty as Free" to start fresh.', 'info');
+            showToast('Schedule cleared. Click any slot to start fresh.', 'info');
         }
 
-        // 11E. Complete GitHub Repository .ZIP Generator
         async function downloadGitHubRepoZip() {
             const menu = document.getElementById('exportMenu');
             if (menu) menu.classList.add('hidden');
 
             if (typeof JSZip === 'undefined') {
-                showToast('JSZip library is still loading. Please try again in a moment.', 'error');
+                showToast('JSZip library is still loading.', 'error');
                 return;
             }
 
@@ -1835,126 +2289,12 @@
 
             try {
                 const zip = new JSZip();
-
-                // 1. Clean self-contained index.html snapshot
                 const cleanHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
                 zip.file('index.html', cleanHtml);
 
-                // 2. Comprehensive README.md with usage & deployment guide
-                const readmeContent = `# 📅 Chronos Academic — Timetable & Smart Slot Planner
-
-A single-page, client-side interactive timetable builder designed for **students, professors, researchers, and academic staff**. Create your custom college or research schedule, automatically detect and manage free slots for deep study or relaxation, and export your timetable to **Excel (.xlsx 2D Grid)**, **Landscape PDF (.pdf)**, **High-Res Image (.png)**, or **JSON backups**.
-
----
-
-## ✨ Key Features
-
-1. **User-Defined Timetable Grid & Granularity**
-   - Customize active days of the week (\`Monday\` through \`Sunday\`).
-   - Define custom daily start and end times (e.g., \`08:00 AM\` to \`06:00 PM\`).
-   - Choose fixed or custom slot intervals (\`15m\`, \`30m\`, \`45m\`, \`60m\`, or any custom duration in minutes).
-2. **Mandatory Daily Lunch Break Builder**
-   - Enforces a minimum **30-minute** lunch break window.
-   - Apply your lunch break across all active days with a single click.
-3. **Custom Academic & Relaxation Categories**
-   - Pre-configured with *Lectures, Practicals/Labs, Research Time, Study Time, Revision Time, Quiet Time, Relax Time, Lunch Break,* and *Free Slot*.
-   - Create unlimited custom categories with your own color palette.
-4. **Smart Slot Finder (\`Fill Empty as Free Slots\`)**
-   - Automatically scans your timetable for unassigned gaps and converts them into editable **Free Slots**.
-   - Calculates exact **Free Hours Available** per day and across the entire week.
-   - Click any Free Slot to convert all or part of it into Study Time, Research, or Relaxation (automatically splits multi-hour free blocks if you only assign a partial window).
-5. **Multi-Format Exports & Offline Persistence**
-   - **Excel 2D Grid (\`.xlsx\`):** Replicates the visual 2D weekly timetable grid along with a category hours summary table.
-   - **Landscape PDF (\`.pdf\`):** Formatted for A4 landscape printing.
-   - **High-Res Image (\`.png\`):** Clean snapshot for sharing or mobile reference.
-   - **Save/Load Template (\`.json\`) & Auto-Save:** Automatically saves changes in browser \`localStorage\` and supports \`.json\` file backups.
-
----
-
-## 🚀 How to Use & Enter Your Schedule Details
-
-### Step 1: Set Your Timetable Header
-- At the top of the timetable card, click directly on the **Title** (*"Fall Semester — Academic & Research Timetable"*) and **Subtitle** (*"Faculty / Student Schedule"*) to type your name, semester, department, or batch.
-
-### Step 2: Configure Days, Hours & Slot Duration
-1. Click the **\`Grid & Categories\`** button in the top navigation bar.
-2. Under **1. Timetable Grid & Granularity**:
-   - Select your **Active Days of the Week**.
-   - Enter your **Daily Start Time** and **Daily End Time**.
-   - Select your **Slot Interval** (\`15m\`, \`30m\`, \`45m\`, \`60m\`, or \`Custom...\`).
-   - Click **\`Update Timetable Grid\`**.
-
-### Step 3: Add Your Daily Lunch Break (Min 30 Mins)
-1. Inside the **\`Grid & Categories\`** drawer, look under **2. Daily Lunch Break**.
-2. Set your **Lunch Start** and **Lunch End** times (must be at least 30 minutes).
-3. Click **\`Apply Lunch Break (Min 30m)\`** to block out lunch across all active days.
-
-### Step 4: Add Custom Categories (Optional)
-1. Under **3. Academic & Relax Categories**, type a category name (e.g., *Office Hours*, *Thesis Writing*, *Gym/Walk*), pick a color, and click **\`Add\`**.
-
-### Step 5: Enter Lectures, Labs & Fixed Commitments
-- Click any empty cell in the timetable grid **OR** click the **\`+ Add Activity\`** button in the top bar.
-- Enter:
-  - **Activity Title / Subject Name** (or click one of the quick-fill preset pills).
-  - **Category** (e.g., *Lectures*, *Practicals / Labs*).
-  - **Assign to Day(s)** (select multiple days at once for recurring classes!).
-  - **Start Time** & **End Time** (supports multi-hour blocks).
-  - **Room / Lab / Location** & **Instructor / Notes** (optional).
-- Click **\`Save Slot\`**.
-
-### Step 6: Run the Smart Slot Finder & Assign Study/Relax Time
-1. Once your fixed classes and lunch are entered, click **\`Fill Empty as Free Slots\`** in the top navigation bar.
-2. All remaining gaps are automatically marked as **Free Slots**, and the **Free Hours Left** counter updates at the top.
-3. Click any **Free Slot** card in the grid to reassign it (or a portion of it) to *Study Time*, *Research Time*, *Revision Time*, *Quiet Time*, or *Relax Time*.
-
-### Step 7: Export & Print
-- Click **\`Export / Save\`** in the top-right corner to download:
-  - **Excel 2D Grid (\`.xlsx\`)**
-  - **Landscape PDF (\`.pdf\`)**
-  - **High-Res Image (\`.png\`)**
-  - **Save Template (\`.json\`)** for future editing.
-
----
-
-## 🌐 Deploying to GitHub Pages
-
-1. Extract this \`.zip\` archive.
-2. Create a new repository on [GitHub](https://github.com/new) (e.g., \`academic-timetable-planner\`).
-3. Upload \`index.html\`, \`README.md\`, \`LICENSE\`, and \`.nojekyll\` to the root of your repository and commit.
-4. Go to **Settings** → **Pages** → select \`main\` branch and \`/ (root)\` folder → click **Save**.
-5. Your app will be live at \`https://<your-username>.github.io/<repo-name>/\`.
-`;
+                const readmeContent = `# 📅 Chronos Academic — Timetable & Smart Slot Planner\n\nA modern, client-side interactive timetable builder designed for students, professors, researchers, and academic staff.`;
                 zip.file('README.md', readmeContent);
-
-                // 3. MIT LICENSE file
-                const licenseContent = `MIT License
-
-Copyright (c) ${new Date().getFullYear()} Chronos Academic Timetable Planner
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-`;
-                zip.file('LICENSE', licenseContent);
-
-                // 4. .nojekyll file for instant GitHub Pages static serving
                 zip.file('.nojekyll', '');
-
-                // 5. Sample schedule template JSON
                 zip.file('sample-schedule-template.json', JSON.stringify(appState, null, 2));
 
                 const blob = await zip.generateAsync({ type: 'blob' });
@@ -1965,15 +2305,15 @@ SOFTWARE.
                 a.click();
                 URL.revokeObjectURL(url);
 
-                showToast('GitHub Repository (.zip) downloaded! Unzip and upload to GitHub.', 'success');
+                showToast('GitHub Repository (.zip) downloaded!', 'success');
             } catch (err) {
                 console.error(err);
-                showToast('Failed to generate .zip package.', 'error');
+                showToast('Failed to generate .zip bundle.', 'error');
             }
         }
 
         /**************************************************************
-         * 12. UTILITIES & TOAST NOTIFICATIONS
+         * 14. TOAST NOTIFICATIONS & UTILITIES
          **************************************************************/
         function escapeHtml(str) {
             if (!str) return '';
@@ -1990,28 +2330,28 @@ SOFTWARE.
             const toast = document.createElement('div');
             
             const styles = {
-                success: 'bg-slate-900 border-emerald-500 text-white',
-                error: 'bg-rose-950 border-rose-500 text-white',
-                info: 'bg-slate-900 border-indigo-500 text-white'
+                success: 'bg-slate-900 border-slate-700 text-white',
+                error: 'bg-rose-950 border-rose-800 text-white',
+                info: 'bg-slate-900 border-slate-700 text-white'
             };
             const icons = {
-                success: '<i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>',
-                error: '<i class="fa-solid fa-circle-exclamation text-rose-400 text-base"></i>',
-                info: '<i class="fa-solid fa-circle-info text-indigo-400 text-base"></i>'
+                success: '<i class="fa-solid fa-circle-check text-emerald-400 text-xs"></i>',
+                error: '<i class="fa-solid fa-circle-exclamation text-rose-400 text-xs"></i>',
+                info: '<i class="fa-solid fa-circle-info text-slate-400 text-xs"></i>'
             };
 
-            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border-l-4 text-xs font-medium transition-all duration-300 ${styles[type] || styles.info}`;
+            toast.className = `pointer-events-auto flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl shadow-lg border text-xs font-medium transition-all duration-200 animate-modal-in ${styles[type] || styles.info}`;
             toast.innerHTML = `
                 ${icons[type] || icons.info}
-                <span class="flex-1 leading-relaxed">${escapeHtml(message)}</span>
+                <span class="flex-1 leading-snug">${escapeHtml(message)}</span>
             `;
 
             container.appendChild(toast);
             setTimeout(() => {
                 toast.style.opacity = '0';
-                toast.style.transform = 'translateY(8px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 3600);
+                toast.style.transform = 'translateY(6px)';
+                setTimeout(() => toast.remove(), 250);
+            }, 3000);
         }
     </script>
 </body>
