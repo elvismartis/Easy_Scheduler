@@ -1,0 +1,278 @@
+{
+  "meta": {
+    "title": "Fall Semester — Academic & Research Timetable",
+    "subtitle": "Faculty / Student Schedule • Smart Slot Planner"
+  },
+  "config": {
+    "activeDays": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday"
+    ],
+    "dayStart": "08:00",
+    "dayEnd": "17:00",
+    "slotDuration": 60,
+    "lunchStart": "13:00",
+    "lunchEnd": "14:00"
+  },
+  "categories": [
+    {
+      "id": "cat_lecture",
+      "name": "Lectures",
+      "color": "#4f46e5",
+      "isBreak": false,
+      "isFree": false
+    },
+    {
+      "id": "cat_lab",
+      "name": "Practicals / Labs",
+      "color": "#0284c7",
+      "isBreak": false,
+      "isFree": false
+    },
+    {
+      "id": "cat_research",
+      "name": "Research Time",
+      "color": "#7c3aed",
+      "isBreak": false,
+      "isFree": false
+    },
+    {
+      "id": "cat_study",
+      "name": "Study Time",
+      "color": "#2563eb",
+      "isBreak": false,
+      "isFree": false
+    },
+    {
+      "id": "cat_revision",
+      "name": "Revision Time",
+      "color": "#0d9488",
+      "isBreak": false,
+      "isFree": false
+    },
+    {
+      "id": "cat_quiet",
+      "name": "Quiet Time",
+      "color": "#475569",
+      "isBreak": false,
+      "isFree": false
+    },
+    {
+      "id": "cat_relax",
+      "name": "Relax Time",
+      "color": "#16a34a",
+      "isBreak": true,
+      "isFree": false
+    },
+    {
+      "id": "cat_lunch",
+      "name": "Lunch Break",
+      "color": "#d97706",
+      "isBreak": true,
+      "isFree": false
+    },
+    {
+      "id": "cat_free",
+      "name": "Free Slot",
+      "color": "#64748b",
+      "isBreak": false,
+      "isFree": true
+    }
+  ],
+  "activities": [
+    {
+      "id": "samp_1",
+      "day": "Monday",
+      "startTime": "09:00",
+      "endTime": "11:00",
+      "title": "CS301: Data Structures & Algorithms",
+      "categoryId": "cat_lecture",
+      "location": "Lecture Hall B",
+      "notes": "Core Batch A"
+    },
+    {
+      "id": "samp_2",
+      "day": "Wednesday",
+      "startTime": "09:00",
+      "endTime": "11:00",
+      "title": "CS301: Data Structures & Algorithms",
+      "categoryId": "cat_lecture",
+      "location": "Lecture Hall B",
+      "notes": "Core Batch A"
+    },
+    {
+      "id": "samp_3",
+      "day": "Tuesday",
+      "startTime": "10:00",
+      "endTime": "12:00",
+      "title": "MA204: Linear Algebra & Optimization",
+      "categoryId": "cat_lecture",
+      "location": "Room 204",
+      "notes": "Prof. Verma"
+    },
+    {
+      "id": "samp_4",
+      "day": "Thursday",
+      "startTime": "10:00",
+      "endTime": "12:00",
+      "title": "MA204: Linear Algebra & Optimization",
+      "categoryId": "cat_lecture",
+      "location": "Room 204",
+      "notes": "Prof. Verma"
+    },
+    {
+      "id": "samp_5",
+      "day": "Tuesday",
+      "startTime": "14:00",
+      "endTime": "17:00",
+      "title": "Systems Programming Lab",
+      "categoryId": "cat_lab",
+      "location": "Comp Lab 3",
+      "notes": "Practical Session"
+    },
+    {
+      "id": "samp_6",
+      "day": "Friday",
+      "startTime": "14:00",
+      "endTime": "16:00",
+      "title": "AI & Machine Learning Seminar",
+      "categoryId": "cat_research",
+      "location": "Seminar Room 1",
+      "notes": "Paper Reading Group"
+    },
+    {
+      "id": "samp_7",
+      "day": "Monday",
+      "startTime": "11:00",
+      "endTime": "13:00",
+      "title": "Deep Study: Problem Sets",
+      "categoryId": "cat_study",
+      "location": "Central Library",
+      "notes": "No phone zone"
+    },
+    {
+      "id": "samp_8",
+      "day": "Wednesday",
+      "startTime": "14:00",
+      "endTime": "16:00",
+      "title": "Thesis Literature Review",
+      "categoryId": "cat_research",
+      "location": "Research Cubicle",
+      "notes": "Drafting section 2"
+    },
+    {
+      "id": "samp_9",
+      "day": "Thursday",
+      "startTime": "14:00",
+      "endTime": "15:00",
+      "title": "Quiet Reading & Journaling",
+      "categoryId": "cat_quiet",
+      "location": "Reading Room",
+      "notes": "Mental clarity"
+    },
+    {
+      "id": "samp_10",
+      "day": "Friday",
+      "startTime": "09:00",
+      "endTime": "11:00",
+      "title": "Weekly Concept Revision",
+      "categoryId": "cat_revision",
+      "location": "Study Desk",
+      "notes": "Review Mon-Thu notes"
+    },
+    {
+      "id": "samp_11",
+      "day": "Saturday",
+      "startTime": "09:00",
+      "endTime": "12:00",
+      "title": "Research Project & Coding",
+      "categoryId": "cat_research",
+      "location": "Innovation Lab",
+      "notes": "Prototype sprint"
+    },
+    {
+      "id": "samp_12",
+      "day": "Monday",
+      "startTime": "16:00",
+      "endTime": "17:00",
+      "title": "Campus Walk & Coffee",
+      "categoryId": "cat_relax",
+      "location": "Botanical Trail",
+      "notes": "Unwind"
+    },
+    {
+      "id": "samp_13",
+      "day": "Thursday",
+      "startTime": "16:00",
+      "endTime": "17:00",
+      "title": "Badminton / Gym Session",
+      "categoryId": "cat_relax",
+      "location": "Sports Complex",
+      "notes": "Cardio"
+    },
+    {
+      "id": "samp_lunch_0",
+      "day": "Monday",
+      "startTime": "13:00",
+      "endTime": "14:00",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "30m+ Mandatory Rest"
+    },
+    {
+      "id": "samp_lunch_1",
+      "day": "Tuesday",
+      "startTime": "13:00",
+      "endTime": "14:00",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "30m+ Mandatory Rest"
+    },
+    {
+      "id": "samp_lunch_2",
+      "day": "Wednesday",
+      "startTime": "13:00",
+      "endTime": "14:00",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "30m+ Mandatory Rest"
+    },
+    {
+      "id": "samp_lunch_3",
+      "day": "Thursday",
+      "startTime": "13:00",
+      "endTime": "14:00",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "30m+ Mandatory Rest"
+    },
+    {
+      "id": "samp_lunch_4",
+      "day": "Friday",
+      "startTime": "13:00",
+      "endTime": "14:00",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "30m+ Mandatory Rest"
+    },
+    {
+      "id": "samp_lunch_5",
+      "day": "Saturday",
+      "startTime": "13:00",
+      "endTime": "14:00",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "30m+ Mandatory Rest"
+    }
+  ]
+}
