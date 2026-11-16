@@ -1,0 +1,371 @@
+{
+  "meta": {
+    "title": "Fall Semester \u2014 Academic & Research Timetable",
+    "subtitle": "Faculty Schedule \u2022 Dept. of Computer Science"
+  },
+  "config": {
+    "activeDays": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday"
+    ],
+    "dayStart": "08:30",
+    "dayEnd": "17:30",
+    "slotDuration": 60,
+    "lunchStart": "12:30",
+    "lunchEnd": "13:30"
+  },
+  "categories": [
+    {
+      "id": "cat_class",
+      "name": "Classes & Labs",
+      "color": "#3b82f6",
+      "isBreak": false,
+      "isFree": false,
+      "icon": "fa-graduation-cap"
+    },
+    {
+      "id": "cat_quiet",
+      "name": "Quiet Time",
+      "color": "#8b5cf6",
+      "isBreak": false,
+      "isFree": false,
+      "icon": "fa-mug-hot"
+    },
+    {
+      "id": "cat_research",
+      "name": "Research Time",
+      "color": "#10b981",
+      "isBreak": false,
+      "isFree": false,
+      "icon": "fa-flask"
+    },
+    {
+      "id": "cat_prep",
+      "name": "Lecture Prep",
+      "color": "#f59e0b",
+      "isBreak": false,
+      "isFree": false,
+      "icon": "fa-book-open"
+    },
+    {
+      "id": "cat_lunch",
+      "name": "Lunch Break",
+      "color": "#ea580c",
+      "isBreak": true,
+      "isFree": false,
+      "icon": "fa-utensils"
+    },
+    {
+      "id": "cat_relax",
+      "name": "Relax Time",
+      "color": "#14b8a6",
+      "isBreak": true,
+      "isFree": false,
+      "icon": "fa-leaf"
+    },
+    {
+      "id": "cat_free",
+      "name": "Open Slot",
+      "color": "#6366f1",
+      "isBreak": false,
+      "isFree": true,
+      "icon": "fa-sparkles"
+    }
+  ],
+  "activities": [
+    {
+      "id": "act_em_mon",
+      "day": "Monday",
+      "startTime": "08:30",
+      "endTime": "09:30",
+      "title": "Open Slot",
+      "categoryId": "cat_free",
+      "badge": "EM"
+    },
+    {
+      "id": "act_em_tue",
+      "day": "Tuesday",
+      "startTime": "08:30",
+      "endTime": "09:30",
+      "title": "Open Slot",
+      "categoryId": "cat_free",
+      "badge": "EM"
+    },
+    {
+      "id": "act_em_wed",
+      "day": "Wednesday",
+      "startTime": "08:30",
+      "endTime": "09:30",
+      "title": "Quiet Time (EM)",
+      "categoryId": "cat_quiet",
+      "badge": "EM",
+      "notes": "Reading & notes"
+    },
+    {
+      "id": "act_em_thu",
+      "day": "Thursday",
+      "startTime": "08:30",
+      "endTime": "09:30",
+      "title": "Quiet Time (EM)",
+      "categoryId": "cat_quiet",
+      "badge": "EM",
+      "notes": "Reading & notes"
+    },
+    {
+      "id": "act_res_fri",
+      "day": "Friday",
+      "startTime": "08:30",
+      "endTime": "12:30",
+      "title": "Research Time",
+      "categoryId": "cat_research",
+      "badge": "",
+      "notes": "Lab experiments"
+    },
+    {
+      "id": "act_res_sat",
+      "day": "Saturday",
+      "startTime": "08:30",
+      "endTime": "12:30",
+      "title": "Research Time",
+      "categoryId": "cat_research",
+      "badge": "",
+      "notes": "Paper drafting"
+    },
+    {
+      "id": "act_prep_mon1",
+      "day": "Monday",
+      "startTime": "09:30",
+      "endTime": "10:30",
+      "title": "Lecture Preparation (EM)",
+      "categoryId": "cat_prep",
+      "badge": "EM"
+    },
+    {
+      "id": "act_class_tue1",
+      "day": "Tuesday",
+      "startTime": "09:30",
+      "endTime": "10:30",
+      "title": "CNP (EM)",
+      "categoryId": "cat_class",
+      "badge": "EM",
+      "location": "Hall 1"
+    },
+    {
+      "id": "act_class_wed1",
+      "day": "Wednesday",
+      "startTime": "09:30",
+      "endTime": "11:30",
+      "title": "AMC (EM)",
+      "categoryId": "cat_class",
+      "badge": "EM",
+      "location": "Room 302"
+    },
+    {
+      "id": "act_prep_thu1",
+      "day": "Thursday",
+      "startTime": "09:30",
+      "endTime": "10:30",
+      "title": "Lecture Preparation (EM)",
+      "categoryId": "cat_prep",
+      "badge": "EM"
+    },
+    {
+      "id": "act_prep_mon2",
+      "day": "Monday",
+      "startTime": "10:30",
+      "endTime": "11:30",
+      "title": "Lecture Preparation (EM)",
+      "categoryId": "cat_prep",
+      "badge": "EM"
+    },
+    {
+      "id": "act_class_tue2",
+      "day": "Tuesday",
+      "startTime": "10:30",
+      "endTime": "12:30",
+      "title": "APA (EM)",
+      "categoryId": "cat_class",
+      "badge": "EM",
+      "location": "Lab 2"
+    },
+    {
+      "id": "act_class_thu1",
+      "day": "Thursday",
+      "startTime": "10:30",
+      "endTime": "11:30",
+      "title": "PIAC-A (EM)",
+      "categoryId": "cat_class",
+      "badge": "EM",
+      "location": "Hall 2"
+    },
+    {
+      "id": "act_class_mon_pre",
+      "day": "Monday",
+      "startTime": "11:30",
+      "endTime": "12:30",
+      "title": "CNP Lab Session",
+      "categoryId": "cat_class",
+      "badge": "LAB"
+    },
+    {
+      "id": "act_quiet_thu_pre",
+      "day": "Thursday",
+      "startTime": "11:30",
+      "endTime": "12:30",
+      "title": "Quiet Focus Time",
+      "categoryId": "cat_quiet",
+      "badge": ""
+    },
+    {
+      "id": "act_res_mon_pm",
+      "day": "Monday",
+      "startTime": "13:30",
+      "endTime": "15:30",
+      "title": "Research & Literature",
+      "categoryId": "cat_research",
+      "location": "Cubicle"
+    },
+    {
+      "id": "act_prep_mon_pm",
+      "day": "Monday",
+      "startTime": "15:30",
+      "endTime": "17:30",
+      "title": "Lecture Preparation",
+      "categoryId": "cat_prep",
+      "notes": "Slide deck review"
+    },
+    {
+      "id": "act_class_tue_pm",
+      "day": "Tuesday",
+      "startTime": "13:30",
+      "endTime": "15:30",
+      "title": "Systems Programming Lab",
+      "categoryId": "cat_class",
+      "location": "Lab 3"
+    },
+    {
+      "id": "act_prep_tue_pm",
+      "day": "Tuesday",
+      "startTime": "15:30",
+      "endTime": "16:30",
+      "title": "Lecture Preparation",
+      "categoryId": "cat_prep"
+    },
+    {
+      "id": "act_class_wed_pm",
+      "day": "Wednesday",
+      "startTime": "13:30",
+      "endTime": "15:30",
+      "title": "AMC Practical Lab",
+      "categoryId": "cat_class",
+      "location": "Lab 1"
+    },
+    {
+      "id": "act_prep_wed_pm",
+      "day": "Wednesday",
+      "startTime": "15:30",
+      "endTime": "17:30",
+      "title": "Lecture Preparation",
+      "categoryId": "cat_prep"
+    },
+    {
+      "id": "act_class_thu_pm",
+      "day": "Thursday",
+      "startTime": "13:30",
+      "endTime": "15:30",
+      "title": "APA Practical Lab",
+      "categoryId": "cat_class",
+      "location": "Lab 2"
+    },
+    {
+      "id": "act_prep_thu_pm",
+      "day": "Thursday",
+      "startTime": "16:30",
+      "endTime": "17:30",
+      "title": "Lecture Preparation",
+      "categoryId": "cat_prep"
+    },
+    {
+      "id": "act_class_fri_pm",
+      "day": "Friday",
+      "startTime": "13:30",
+      "endTime": "15:30",
+      "title": "Department Seminar",
+      "categoryId": "cat_class",
+      "location": "Auditorium"
+    },
+    {
+      "id": "act_res_fri_pm",
+      "day": "Friday",
+      "startTime": "15:30",
+      "endTime": "17:30",
+      "title": "Research Time",
+      "categoryId": "cat_research",
+      "notes": "Synthesis"
+    },
+    {
+      "id": "act_lunch_0",
+      "day": "Monday",
+      "startTime": "12:30",
+      "endTime": "13:30",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "Recharge & rest"
+    },
+    {
+      "id": "act_lunch_1",
+      "day": "Tuesday",
+      "startTime": "12:30",
+      "endTime": "13:30",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "Recharge & rest"
+    },
+    {
+      "id": "act_lunch_2",
+      "day": "Wednesday",
+      "startTime": "12:30",
+      "endTime": "13:30",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "Recharge & rest"
+    },
+    {
+      "id": "act_lunch_3",
+      "day": "Thursday",
+      "startTime": "12:30",
+      "endTime": "13:30",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "Recharge & rest"
+    },
+    {
+      "id": "act_lunch_4",
+      "day": "Friday",
+      "startTime": "12:30",
+      "endTime": "13:30",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "Recharge & rest"
+    },
+    {
+      "id": "act_lunch_5",
+      "day": "Saturday",
+      "startTime": "12:30",
+      "endTime": "13:30",
+      "title": "Lunch Break",
+      "categoryId": "cat_lunch",
+      "location": "Dining Hall",
+      "notes": "Recharge & rest"
+    }
+  ]
+}
