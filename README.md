@@ -1,92 +1,106 @@
-# 📅 Easy Scheduler — Timetable & Smart Slot Planner
+# Easy Scheduler — Academic Timetable & Smart Slot Planner
 
-A single-page, client-side interactive timetable builder designed for **students, professors, researchers, and academic staff**. Create your custom college or research schedule, automatically detect and manage free slots for deep study or relaxation, and export your timetable to **Excel (.xlsx 2D Grid)**, **Landscape PDF (.pdf)**, **High-Res Image (.png)**, or **JSON backups**.
+Easy Scheduler is a browser-based timetable planner for students, professors, researchers, and academic staff. Build a weekly schedule, organise activities with your own categories and colours, identify unassigned time, detect scheduling conflicts, and export the timetable.
 
----
-[Click here to make your own scheduler](https://elvismartis.github.io/Easy_Scheduler/)
+## Live site
 
----
+**[Open Easy Scheduler](https://elvismartis.github.io/Easy_Scheduler/)**
 
-##  Key Features
-
-1. **Unified, Non-Tech Friendly Schedule Setup**
-   - All user-defined settings (Schedule Title, Department, Active Days, Daily Hours, Slot Duration, Lunch Break, and Subject Categories) are placed together in one intuitive, prominently visible card.
-   - Large, high-contrast entry boxes and comfortable typography designed specifically for ease of use.
-2. **Mobile Browser Compatibility**
-   - **Dual Viewing Modes:** Switch seamlessly between **Weekly Grid** (with sticky time column and smooth horizontal swipe) and **Day-by-Day View** (vertical slot cards optimized for phones).
-   - **Touch Target Friendly:** Generous tap targets (minimum 44px) and mobile inputs styled (16px minimum font) to prevent annoying auto-zooming on iOS Safari and mobile Chrome.
-   - **Mobile Quick Action FAB:** Floating "+ Add Activity" button for convenient one-thumb scheduling on the go.
-3. **User-Defined Timetable Grid & Granularity**
-   - Customize active days of the week (`Monday` through `Sunday`) with 1-click presets (`Mon–Fri`, `Mon–Sat`, `All 7 Days`).
-   - Define custom daily start and end times (e.g., `08:30 AM` to `05:30 PM`).
-   - Choose slot intervals (`15m`, `30m`, `45m`, `60m`, `90m`, or `Custom...`).
-4. **Mandatory Daily Lunch Break Builder**
-   - Enforces a minimum **30-minute** lunch break window.
-   - Apply your lunch break across all active days with a single click.
-5. **Custom Academic & Relaxation Categories**
-   - Pre-configured with *Classes & Labs, Quiet Time, Research Time, Lecture Prep, Lunch Break, Relax Time,* and *Open Slot*.
-   - Create unlimited custom categories with your own color palette.
-6. **Smart Slot Finder (`Fill Empty Slots`)**
-   - Automatically scans your timetable for unassigned gaps and converts them into editable **Open Slots**.
-   - Calculates exact **Free Hours Available** per day and across the entire week.
-   - Click any Open Slot to convert all or part of it into Quiet Time, Research, or Lecture Prep with 1-tap quick buttons.
-7. **Multi-Format Exports & Offline Persistence**
-   - **Excel 2D Grid (`.xlsx`):** Replicates the visual 2D weekly timetable grid along with a category hours summary table.
-   - **Landscape PDF (`.pdf`):** Formatted for A4 landscape printing.
-   - **High-Res Image (`.png`):** Clean snapshot for sharing or mobile reference.
-   - **Save/Load Template (`.json`) & Auto-Save:** Automatically saves changes in browser `localStorage` and supports `.json` file backups.
+The application runs in the browser. Your timetable is saved in the browser's local storage; use the JSON export to create a backup or move a schedule to another browser or device.
 
 ---
 
-##  How to Use & Enter Your Schedule Details
+## Features
 
-### Step 1: Open Schedule Setup
-- All settings are unified directly inside the **Schedule Setup & Timing** card at the top of the page.
-- You can minimize or open this card at any time using the **`Schedule Setup`** button in the top navigation bar.
+### Flexible timetable setup
 
-### Step 2: Set Your Timetable Header
-- Enter your **Timetable Title** (e.g. *"Fall Semester — Academic & Research Timetable"*) and **Department / Subtitle / Batch** (e.g. *"Faculty Schedule • Dept. of Computer Science"*).
-- These appear on your timetable header and on all exported documents.
+- Set the timetable title and subtitle.
+- Choose active days from Monday to Sunday, with weekday and full-week shortcuts.
+- Configure daily start and end times.
+- Choose a 15-, 30-, 45-, 60-, or 90-minute slot interval, or define a custom interval.
+- Configure a daily lunch window and apply it to the timetable.
 
-### Step 3: Configure Working Days & Daily Hours
-- Tap the **Active Days** pills to choose your schedule days (or use the *Mon–Fri*, *Mon–Sat*, *All 7 Days* quick buttons).
-- Select your **Daily Start Time** (e.g. `08:30`) and **Daily End Time** (e.g. `17:30`).
-- Choose your **Slot Interval** (`15m`, `30m`, `45m`, `60m`, or `Custom...`).
+### Blank schedule when you start
 
-### Step 4: Configure Daily Lunch Break
-- Set your **Lunch Start Time** and **Lunch End Time** (minimum 30 minutes).
-- Check the option to overwrite conflicting slots if desired, and click **`Apply Lunch Window Only`** or include it when saving settings.
+- A new installation opens with an empty timetable; no sample activities are inserted automatically.
+- No subject categories or category colours are preloaded.
+- The initial configuration uses Monday to Saturday, 08:30–17:30, and a 60-minute slot interval. You can change these settings in **Schedule Setup**.
 
-### Step 5: Save & Apply Settings
-- Click the big primary button **`Apply & Save Schedule Settings`**. Your timetable grid and time ranges update immediately!
+### User-defined categories and colours
 
-### Step 6: Enter Classes, Labs & Commitments
-- Tap any empty slot in the grid or day view, **OR** tap the prominent **`+ Add Activity`** button (or the mobile floating action button).
-- Enter:
-  - **Activity Title / Subject Name** (or tap one of the quick preset pills).
-  - **Category** (e.g., *Classes & Labs*, *Research Time*).
-  - **Assign to Day(s)** (select multiple days for recurring classes!).
-  - **Start Time & End Time** (or tap 1h, 2h, 3h, 4h duration chips).
-  - **Room / Location** & **Notes / Instructor** (optional).
-- Tap **`Save Slot`**.
+- Create the categories you need; the application does not impose a preset category list.
+- Choose a colour for each category and adjust it later.
+- Edit or remove categories from **Subject Categories & Colors**.
+- Assign a category to an activity when adding or editing a timetable slot.
 
-### Step 7: Fill Remaining Gaps with Open Slots
-- Once your fixed classes are entered, tap **`Fill Empty`** in the top navigation bar.
-- All unassigned gaps are marked as **Open Slots** with 1-tap buttons to assign study or research time.
+### Activity management and conflict detection
 
-### Step 8: View & Export on Mobile or Desktop
-- **Mobile Browsing:** Switch between **`Weekly Grid`** (swipe horizontally across days with a sticky time column) and **`Day View`** (vertical card stack by day).
-- **Exporting:** Tap **`Export`** in the top bar to download **Excel (.xlsx)**, **Landscape PDF (.pdf)**, **High-Res PNG image**, or **JSON template**.
+- Add activities from the **Add Activity** button or by selecting a timetable slot.
+- Record the activity title, category, day or days, start and end times, location, tag, and notes.
+- Assign recurring activities to multiple days.
+- When a new or edited activity overlaps an existing scheduled activity on the same day, Easy Scheduler displays a conflict warning with the existing activity and overlapping time interval.
+- Choose **Go back and edit** to cancel the pending save, or **Save anyway** to proceed.
+- When you choose to save despite a conflict, the new activity takes the overlapping time; any non-overlapping portion of the existing activity is retained.
+- Availability placeholders such as Open Slots are excluded from clash warnings so that free time can be assigned normally.
+
+### Find and manage free time
+
+- Use **Fill Empty** to mark unassigned gaps as editable Open Slots.
+- Review free time in the weekly grid and day view.
+- Use the free-time summaries to understand how much of the timetable remains unassigned.
+
+### Weekly and mobile views
+
+- **Weekly Grid:** See the week in a table with a sticky time column and horizontal scrolling when needed.
+- **Day View:** Review one day as a vertical list of activity cards.
+- The layout includes mobile-friendly controls and touch targets.
+
+### Export and backup
+
+- **Excel (`.xlsx`):** Export a two-dimensional weekly timetable and schedule summary.
+- **PDF (`.pdf`):** Export a landscape A4 timetable. The PDF is generated with jsPDF and can span multiple pages when required. If the PDF library is unavailable or PDF generation fails, the application falls back to the browser print dialog.
+- **PNG (`.png`):** Export a high-resolution image of the timetable.
+- **JSON (`.json`):** Export or import a schedule template for backup and transfer.
+- **Repository ZIP (`.zip`):** Download a ZIP package of the project from the Export menu.
 
 ---
 
-##  Tech Stack
-- **SheetJS (`xlsx`)** (2D Visual Grid Spreadsheet Export)
-- **html2canvas & jsPDF** (High-DPI PNG & Landscape A4 PDF Generation)
-- **JSZip** (One-Click GitHub Repository `.zip` Bundler)
-- **FontAwesome 6 & Google Fonts (`Inter`)**
+## Getting started
 
----
+1. Open the [live scheduler](https://elvismartis.github.io/Easy_Scheduler/).
+2. Open **Schedule Setup** and enter a timetable title and subtitle.
+3. Select active days, daily start and end times, and the slot interval.
+4. Add the subject categories you want under **Subject Categories & Colors**, selecting a colour for each one.
+5. Click **Apply & Save Schedule Settings**.
+6. Add activities using **Add Activity** or by selecting an empty slot in the timetable. Enter the title, category, day or days, start and end times, and any optional location or notes.
+7. Use **Fill Empty** to mark the remaining unassigned gaps as Open Slots.
+8. Use **Export** to download an Excel workbook, PDF, PNG image, or JSON backup.
 
-## 📄 License
-Licensed under the **MIT License** — free to use, modify, and share for personal, academic, or institutional use.
+## Schedule conflict behaviour
+
+Conflict detection compares the proposed activity's time interval with existing activities on each selected day. Two activities that meet exactly at an endpoint—for example, 09:00–10:00 and 10:00–11:00—are not treated as overlapping. If an overlap is found, the application pauses the save and asks the user to choose whether to return to editing or save anyway.
+
+## Technology
+
+- HTML, CSS, and JavaScript
+- Tailwind CSS utility styling (bundled in the page)
+- [SheetJS](https://sheetjs.com/) for Excel export
+- [jsPDF](https://github.com/parallax/jsPDF) for landscape PDF export
+- [html2canvas](https://html2canvas.hertzen.com/) for PNG export
+- [JSZip](https://stuk.github.io/jszip/) for repository ZIP packaging
+- Font Awesome icons and the Inter typeface
+
+## Deployment with GitHub Pages
+
+1. Keep `index.html` in the root of the GitHub repository.
+2. Commit and push the updated file to the branch used by GitHub Pages.
+3. In the repository settings, open **Pages** and confirm the publishing branch and root folder.
+4. Open the live site link above. After a deployment, refresh the page; if an older version remains cached, perform a hard refresh.
+
+## Data and privacy
+
+The timetable is stored in the browser's `localStorage` on the device and browser where it was created. It is not automatically synchronised across devices. Export a JSON template regularly if you need a portable backup. Clearing browser site data can remove the locally stored timetable.
+
+## License
+
+This project is distributed under the **MIT License**. See the repository's `LICENSE` file for the full license text.
