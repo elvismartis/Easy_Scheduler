@@ -2738,10 +2738,6 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                             </button>
                         </div>
                         <div class="p-2">
-                            <button onclick="loadSampleSchedule()" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-xl text-slate-600 flex items-center gap-3 transition">
-                                <i class="fa-solid fa-rotate-left text-slate-400 text-base w-5"></i>
-                                <span class="font-medium">Load Demo Sample Data</span>
-                            </button>
                             <button onclick="openConfirmClearModal()" class="w-full text-left px-3 py-2 text-sm hover:bg-rose-50 rounded-xl text-rose-600 flex items-center gap-3 transition">
                                 <i class="fa-solid fa-trash-can text-base w-5"></i>
                                 <span class="font-semibold">Clear Entire Schedule</span>
@@ -2921,24 +2917,19 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
 
                 <!-- 4. Academic & Activity Categories -->
                 <div class="bg-slate-50/70 p-4 sm:p-5 rounded-2xl border border-slate-200/80">
-                    <div class="flex items-center justify-between gap-2 mb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">4</span>
-                            <h3 class="text-sm sm:text-base font-bold text-slate-900">Subject Categories & Colors</h3>
-                        </div>
-                        <button type="button" onclick="restoreMinimalistPalette()" class="text-xs font-semibold text-indigo-700 hover:underline flex items-center gap-1.5">
-                            <i class="fa-solid fa-rotate-left"></i>
-                            <span>Reset Colors</span>
-                        </button>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">4</span>
+                        <h3 class="text-sm sm:text-base font-bold text-slate-900">Subject Categories & Colors</h3>
                     </div>
+                    <p class="text-xs sm:text-sm text-slate-500 mb-3">Create only the categories you need. Each category name and colour is entirely yours; nothing is preloaded.</p>
 
                     <!-- Add New Category Form -->
                     <div class="flex flex-wrap gap-2.5 mb-3.5">
-                        <input type="text" id="newCatName" placeholder="Add custom category (e.g. Office Hours, Seminar)..." 
+                        <input type="text" id="newCatName" placeholder="Enter a category name..." 
                             class="flex-1 min-w-[220px] text-base font-medium rounded-xl border-2 border-slate-200 bg-white px-3.5 py-2.5 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition">
                         <div class="flex items-center gap-2 bg-white border-2 border-slate-200 px-3 py-2 rounded-xl">
-                            <span class="text-xs font-semibold text-slate-500">Color:</span>
-                            <input type="color" id="newCatColor" value="#3b82f6" class="w-7 h-7 rounded-lg cursor-pointer border-0 p-0 bg-transparent" title="Pick Category Color">
+                            <span class="text-xs font-semibold text-slate-500">Choose color:</span>
+                            <input type="color" id="newCatColor" value="#64748b" class="w-7 h-7 rounded-lg cursor-pointer border-0 p-0 bg-transparent" title="Pick Category Color">
                         </div>
                         <button type="button" onclick="addNewCategory()" class="touch-btn bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition">
                             Add Category
@@ -2946,8 +2937,8 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     </div>
 
                     <!-- Category Pills List -->
-                    <div id="categoryManagerList" class="flex flex-wrap gap-2 pt-1 max-h-40 overflow-y-auto">
-                        <!-- Populated by JS -->
+                    <div id="categoryManagerList" class="flex flex-wrap gap-2 pt-1 max-h-40 overflow-y-auto" aria-live="polite">
+                        <!-- User-created categories appear here. -->
                     </div>
                 </div>
 
@@ -2967,64 +2958,9 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             </div>
         </section>
 
-        <!-- Top 5 Metric Cards -->
-        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 no-print" id="topMetricsRow">
-            
-            <!-- 1. Classes & Labs -->
-            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between hover:border-blue-400 transition-all cursor-pointer" onclick="setCategoryFilter('cat_class')">
-                <div>
-                    <div class="text-xs sm:text-sm font-semibold text-slate-500 mb-1">Classes & Labs</div>
-                    <div id="statClassesHours" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">14.0h</div>
-                </div>
-                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-graduation-cap text-lg sm:text-xl"></i>
-                </div>
-            </div>
-
-            <!-- 2. Quiet Time -->
-            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between hover:border-purple-400 transition-all cursor-pointer" onclick="setCategoryFilter('cat_quiet')">
-                <div>
-                    <div class="text-xs sm:text-sm font-semibold text-purple-700 mb-1">Quiet Time</div>
-                    <div id="statQuietHours" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">3.0h</div>
-                </div>
-                <div class="w-11 h-11 rounded-xl bg-purple-100/70 text-purple-700 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-mug-hot text-lg sm:text-xl"></i>
-                </div>
-            </div>
-
-            <!-- 3. Research Time -->
-            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between hover:border-emerald-400 transition-all cursor-pointer" onclick="setCategoryFilter('cat_research')">
-                <div>
-                    <div class="text-xs sm:text-sm font-semibold text-emerald-700 mb-1">Research Time</div>
-                    <div id="statResearchHours" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">12.0h</div>
-                </div>
-                <div class="w-11 h-11 rounded-xl bg-emerald-100/70 text-emerald-700 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-flask text-lg sm:text-xl"></i>
-                </div>
-            </div>
-
-            <!-- 4. Lecture Prep -->
-            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between hover:border-amber-400 transition-all cursor-pointer" onclick="setCategoryFilter('cat_prep')">
-                <div>
-                    <div class="text-xs sm:text-sm font-semibold text-amber-800 mb-1">Lecture Prep</div>
-                    <div id="statPrepHours" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">9.0h</div>
-                </div>
-                <div class="w-11 h-11 rounded-xl bg-amber-100/70 text-amber-700 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-book-open text-lg sm:text-xl"></i>
-                </div>
-            </div>
-
-            <!-- 5. Available Free -->
-            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between hover:border-indigo-400 transition-all cursor-pointer col-span-2 sm:col-span-1" onclick="setCategoryFilter('cat_free')">
-                <div>
-                    <div class="text-xs sm:text-sm font-semibold text-indigo-600 mb-1">Available Free</div>
-                    <div id="statFreeHoursBadge" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">4.0h (10%)</div>
-                </div>
-                <div class="w-11 h-11 rounded-xl bg-indigo-100/70 text-indigo-600 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-sparkles text-lg sm:text-xl"></i>
-                </div>
-            </div>
-
+        <!-- User-defined category metrics and available time -->
+        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 no-print" id="topMetricsRow" aria-live="polite">
+            <!-- Populated from user-created categories. -->
         </section>
 
         <!-- Preserved hidden stats bindings -->
@@ -3039,41 +2975,21 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             <div id="categoryStatsPills"></div>
         </div>
 
-        <!-- Quick-Fill Early Morning (08:30 - 09:30) Banner -->
+        <!-- Schedule guidance and active filter -->
         <section class="bg-white rounded-2xl border border-slate-200 px-4 py-3 sm:py-3.5 flex flex-wrap items-center justify-between gap-3 shadow-2xs no-print">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-bolt text-sm"></i>
+                    <i class="fa-solid fa-calendar-plus text-sm"></i>
                 </div>
                 <div>
-                    <div class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                        <span>Quick-Fill Early Morning (08:30 – 09:30)</span>
-                    </div>
-                    <div class="text-xs sm:text-sm text-slate-500">
-                        Quickly assign early focus blocks for Monday, Tuesday, and Wednesday
-                    </div>
+                    <div class="text-sm sm:text-base font-bold text-slate-900">Your timetable starts empty</div>
+                    <div class="text-xs sm:text-sm text-slate-500">Create your own categories in Schedule Setup, then select any open cell to add an activity.</div>
                 </div>
             </div>
-            
-            <!-- Quick Fill Action Pills -->
-            <div class="flex items-center gap-2 flex-wrap">
-                <button type="button" onclick="applyEarlyMorningPreset('cat_quiet', 'Quiet Time (EM)')" class="touch-btn bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs sm:text-sm font-bold px-3 sm:px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 active:scale-98">
-                    <i class="fa-solid fa-mug-hot text-xs"></i>
-                    <span>+ Quiet Time (EM)</span>
-                </button>
-                <button type="button" onclick="applyEarlyMorningPreset('cat_research', 'Research Time')" class="touch-btn bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs sm:text-sm font-bold px-3 sm:px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 active:scale-98">
-                    <i class="fa-solid fa-flask text-xs"></i>
-                    <span>+ Research (EM)</span>
-                </button>
-                <button type="button" onclick="applyEarlyMorningPreset('cat_prep', 'Lecture Preparation (EM)')" class="touch-btn bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs sm:text-sm font-bold px-3 sm:px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 active:scale-98">
-                    <i class="fa-solid fa-book-open text-xs"></i>
-                    <span>+ Prep (EM)</span>
-                </button>
-                <button id="activeFilterPill" onclick="clearCategoryFilter()" class="hidden text-xs sm:text-sm bg-slate-900 text-white font-semibold px-3 py-1.5 rounded-full flex items-center gap-2 transition ml-1">
-                    <span id="activeFilterName">Filter</span>
-                    <i class="fa-solid fa-xmark text-xs"></i>
-                </button>
-            </div>
+            <button id="activeFilterPill" onclick="clearCategoryFilter()" class="hidden text-xs sm:text-sm bg-slate-900 text-white font-semibold px-3 py-1.5 rounded-full items-center gap-2 transition ml-1">
+                <span id="activeFilterName">Filter</span>
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
         </section>
 
         <!-- Timetable Area (Supports 2D Grid + Mobile Day View) -->
@@ -3085,7 +3001,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     <div class="flex items-center gap-2 group">
                         <input type="text" id="scheduleTitleInput" 
                             oninput="handleTitleChange(this.value)" 
-                            value="Fall Semester — Academic & Research Timetable" 
+                            value="My Weekly Schedule" 
                             class="text-lg sm:text-2xl font-black text-slate-900 bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-indigo-600 focus:outline-none w-full px-1 -ml-1 rounded transition"
                             title="Click to edit Timetable Title">
                         <i class="fa-solid fa-pen text-xs text-slate-400 group-hover:text-slate-600 transition no-print"></i>
@@ -3093,7 +3009,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 text-xs sm:text-sm text-slate-500 font-medium">
                         <input type="text" id="scheduleSubtitleInput" 
                             oninput="handleSubtitleChange(this.value)" 
-                            value="Faculty Schedule • Dept. of Computer Science" 
+                            value="Plan your classes, research, and personal time" 
                             class="bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-indigo-600 focus:outline-none text-slate-600 font-semibold px-1 -ml-1 rounded transition text-xs sm:text-sm"
                             title="Click to edit Subtitle">
                         <span class="text-slate-300">•</span>
@@ -3209,18 +3125,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             <form id="activityForm" onsubmit="saveActivityFromModal(event)" class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
                 <input type="hidden" id="editingActivityId" value="">
 
-                <!-- Quick Presets -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Quick Fill Presets</label>
-                    <div class="flex flex-wrap gap-1.5">
-                        <button type="button" onclick="applyQuickPreset('CNP (EM)', 'cat_class', 'EM')" class="touch-btn text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-xl font-bold transition">🎓 Class (CNP)</button>
-                        <button type="button" onclick="applyQuickPreset('Quiet Time (EM)', 'cat_quiet', 'EM')" class="touch-btn text-xs sm:text-sm bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-xl font-bold transition">☕ Quiet Time</button>
-                        <button type="button" onclick="applyQuickPreset('Research Time', 'cat_research', '')" class="touch-btn text-xs sm:text-sm bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-xl font-bold transition">🧪 Research</button>
-                        <button type="button" onclick="applyQuickPreset('Lecture Preparation (EM)', 'cat_prep', 'EM')" class="touch-btn text-xs sm:text-sm bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1.5 rounded-xl font-bold transition">📖 Lecture Prep</button>
-                        <button type="button" onclick="applyQuickPreset('Lunch Break', 'cat_lunch', '')" class="touch-btn text-xs sm:text-sm bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 px-3 py-1.5 rounded-xl font-bold transition">🍱 Lunch</button>
-                        <button type="button" onclick="applyQuickPreset('Open Slot', 'cat_free', '')" class="touch-btn text-xs sm:text-sm bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-3 py-1.5 rounded-xl font-bold transition">✨ Open Slot</button>
-                    </div>
-                </div>
+                <p class="text-xs text-slate-500">Choose from your own categories. You can leave the category blank if the activity does not need one.</p>
 
                 <!-- Subject Title -->
                 <div>
@@ -3233,7 +3138,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-slate-800 mb-1.5">Category *</label>
-                        <select id="actCategory" required class="w-full text-base font-semibold rounded-xl border-2 border-slate-200 bg-white px-4 py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900">
+                        <select id="actCategory" class="w-full text-base font-semibold rounded-xl border-2 border-slate-200 bg-white px-4 py-3 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition text-slate-900">
                             <!-- Populated by JS -->
                         </select>
                     </div>
@@ -3372,84 +3277,13 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
         /**************************************************************
          * 1. STATE & CATEGORY THEME CONFIGURATION
          **************************************************************/
-        const STORAGE_KEY = 'Easy Scheduler_academic_timetable_v1';
+        const STORAGE_KEY = 'Easy Scheduler_academic_timetable_v2';
         const ALL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-        // Preset Categories corresponding directly to user image
-        const DEFAULT_CATEGORIES = [
-            { id: 'cat_class', name: 'Classes & Labs', color: '#3b82f6', isBreak: false, isFree: false, icon: 'fa-graduation-cap' },
-            { id: 'cat_quiet', name: 'Quiet Time', color: '#8b5cf6', isBreak: false, isFree: false, icon: 'fa-mug-hot' },
-            { id: 'cat_research', name: 'Research Time', color: '#10b981', isBreak: false, isFree: false, icon: 'fa-flask' },
-            { id: 'cat_prep', name: 'Lecture Prep', color: '#f59e0b', isBreak: false, isFree: false, icon: 'fa-book-open' },
-            { id: 'cat_lunch', name: 'Lunch Break', color: '#ea580c', isBreak: true, isFree: false, icon: 'fa-utensils' },
-            { id: 'cat_relax', name: 'Relax Time', color: '#14b8a6', isBreak: true, isFree: false, icon: 'fa-leaf' },
-            { id: 'cat_free', name: 'Open Slot', color: '#6366f1', isBreak: false, isFree: true, icon: 'fa-sparkles' }
-        ];
-
-        // Exact theme styles matching the reference screenshot cards
-        const CATEGORY_STYLES = {
-            cat_class: {
-                bg: '#f0f7ff',
-                border: '#bfdbfe',
-                badgeBg: '#dbeafe',
-                badgeText: '#1d4ed8',
-                label: 'Class',
-                icon: 'fa-graduation-cap'
-            },
-            cat_quiet: {
-                bg: '#faf5ff',
-                border: '#e9d5ff',
-                badgeBg: '#f3e8ff',
-                badgeText: '#7e22ce',
-                label: 'Quiet Time',
-                icon: 'fa-mug-hot'
-            },
-            cat_research: {
-                bg: '#f0fdf4',
-                border: '#bbf7d0',
-                badgeBg: '#dcfce7',
-                badgeText: '#15803d',
-                label: 'Research',
-                icon: 'fa-flask'
-            },
-            cat_prep: {
-                bg: '#fffbeb',
-                border: '#fde68a',
-                badgeBg: '#fef3c7',
-                badgeText: '#b45309',
-                label: 'Lecture Prep',
-                icon: 'fa-book-open'
-            },
-            cat_lunch: {
-                bg: '#fff7ed',
-                border: '#fed7aa',
-                badgeBg: '#ffedd5',
-                badgeText: '#c2410c',
-                label: 'Lunch',
-                icon: 'fa-utensils'
-            },
-            cat_relax: {
-                bg: '#f0fdfa',
-                border: '#99f6e4',
-                badgeBg: '#ccfbf1',
-                badgeText: '#0f766e',
-                label: 'Relax',
-                icon: 'fa-leaf'
-            },
-            cat_free: {
-                bg: '#fffdf5',
-                border: '#fcd34d',
-                badgeBg: '#fef3c7',
-                badgeText: '#92400e',
-                label: 'Open Slot',
-                icon: 'fa-sparkles'
-            }
-        };
-
-        let appState = {
+        const EMPTY_SCHEDULE_DEFAULTS = {
             meta: {
-                title: 'Fall Semester — Academic & Research Timetable',
-                subtitle: 'Faculty Schedule • Dept. of Computer Science'
+                title: 'My Weekly Schedule',
+                subtitle: 'Plan your classes, research, and personal time'
             },
             config: {
                 activeDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
@@ -3459,9 +3293,11 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 lunchStart: '12:30',
                 lunchEnd: '13:30'
             },
-            categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)),
+            categories: [],
             activities: []
         };
+
+        let appState = JSON.parse(JSON.stringify(EMPTY_SCHEDULE_DEFAULTS));
 
         let currentActiveCategoryFilter = null;
         let currentSearchQuery = '';
@@ -3575,104 +3411,42 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 const raw = localStorage.getItem(STORAGE_KEY);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    if (parsed && parsed.config && parsed.categories && Array.isArray(parsed.activities)) {
-                        appState = parsed;
-                        // Ensure required core categories exist
-                        if (!appState.categories.some(c => c.id === 'cat_free')) {
-                            appState.categories.push({ id: 'cat_free', name: 'Open Slot', color: '#6366f1', isBreak: false, isFree: true, icon: 'fa-sparkles' });
-                        }
-                        if (!appState.categories.some(c => c.id === 'cat_prep')) {
-                            appState.categories.push({ id: 'cat_prep', name: 'Lecture Prep', color: '#f59e0b', isBreak: false, isFree: false, icon: 'fa-book-open' });
-                        }
-                        if (!appState.categories.some(c => c.id === 'cat_class')) {
-                            appState.categories.push({ id: 'cat_class', name: 'Classes & Labs', color: '#3b82f6', isBreak: false, isFree: false, icon: 'fa-graduation-cap' });
-                        }
+                    if (parsed && parsed.config && Array.isArray(parsed.activities)) {
+                        appState = {
+                            meta: { ...EMPTY_SCHEDULE_DEFAULTS.meta, ...(parsed.meta || {}) },
+                            config: { ...EMPTY_SCHEDULE_DEFAULTS.config, ...parsed.config },
+                            categories: Array.isArray(parsed.categories) ? parsed.categories : [],
+                            activities: parsed.activities
+                        };
                         return;
                     }
                 }
-                populateInitialSampleData();
             } catch (e) {
-                console.error('Error loading from storage:', e);
-                populateInitialSampleData();
+                console.error('Error loading saved schedule:', e);
             }
+
+            // New installations start with an entirely empty timetable and no categories.
+            // The v2 storage key intentionally avoids restoring the former demo schedule.
+            initializeEmptySchedule();
         }
 
-        function populateInitialSampleData() {
-            appState.config = {
-                activeDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-                dayStart: '08:30',
-                dayEnd: '17:30',
-                slotDuration: 60,
-                lunchStart: '12:30',
-                lunchEnd: '13:30'
-            };
-            appState.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
-            
-            // Sample Activities specifically structured to replicate the user's reference image
-            appState.activities = [
-                // 1. Early Morning (08:30 - 09:30)
-                { id: 'act_em_mon', day: 'Monday', startTime: '08:30', endTime: '09:30', title: 'Open Slot', categoryId: 'cat_free', badge: 'EM' },
-                { id: 'act_em_tue', day: 'Tuesday', startTime: '08:30', endTime: '09:30', title: 'Open Slot', categoryId: 'cat_free', badge: 'EM' },
-                { id: 'act_em_wed', day: 'Wednesday', startTime: '08:30', endTime: '09:30', title: 'Quiet Time (EM)', categoryId: 'cat_quiet', badge: 'EM', notes: 'Reading & notes' },
-                { id: 'act_em_thu', day: 'Thursday', startTime: '08:30', endTime: '09:30', title: 'Quiet Time (EM)', categoryId: 'cat_quiet', badge: 'EM', notes: 'Reading & notes' },
-                { id: 'act_res_fri', day: 'Friday', startTime: '08:30', endTime: '12:30', title: 'Research Time', categoryId: 'cat_research', badge: '', notes: 'Lab experiments' },
-                { id: 'act_res_sat', day: 'Saturday', startTime: '08:30', endTime: '12:30', title: 'Research Time', categoryId: 'cat_research', badge: '', notes: 'Paper drafting' },
-
-                // 2. Mid Morning (09:30 - 10:30)
-                { id: 'act_prep_mon1', day: 'Monday', startTime: '09:30', endTime: '10:30', title: 'Lecture Preparation (EM)', categoryId: 'cat_prep', badge: 'EM' },
-                { id: 'act_class_tue1', day: 'Tuesday', startTime: '09:30', endTime: '10:30', title: 'CNP (EM)', categoryId: 'cat_class', badge: 'EM', location: 'Hall 1' },
-                { id: 'act_class_wed1', day: 'Wednesday', startTime: '09:30', endTime: '11:30', title: 'AMC (EM)', categoryId: 'cat_class', badge: 'EM', location: 'Room 302' },
-                { id: 'act_prep_thu1', day: 'Thursday', startTime: '09:30', endTime: '10:30', title: 'Lecture Preparation (EM)', categoryId: 'cat_prep', badge: 'EM' },
-
-                // 3. Late Morning (10:30 - 11:30)
-                { id: 'act_prep_mon2', day: 'Monday', startTime: '10:30', endTime: '11:30', title: 'Lecture Preparation (EM)', categoryId: 'cat_prep', badge: 'EM' },
-                { id: 'act_class_tue2', day: 'Tuesday', startTime: '10:30', endTime: '12:30', title: 'APA (EM)', categoryId: 'cat_class', badge: 'EM', location: 'Lab 2' },
-                { id: 'act_class_thu1', day: 'Thursday', startTime: '10:30', endTime: '11:30', title: 'PIAC-A (EM)', categoryId: 'cat_class', badge: 'EM', location: 'Hall 2' },
-
-                // 4. Pre-Lunch Blocks (11:30 - 12:30)
-                { id: 'act_class_mon_pre', day: 'Monday', startTime: '11:30', endTime: '12:30', title: 'CNP Lab Session', categoryId: 'cat_class', badge: 'LAB' },
-                { id: 'act_quiet_thu_pre', day: 'Thursday', startTime: '11:30', endTime: '12:30', title: 'Quiet Focus Time', categoryId: 'cat_quiet', badge: '' },
-
-                // 5. Afternoon Focus, Classes & Prep (To balance 14h Class, 3h Quiet, 12h Research, 9h Prep, 4h Free)
-                { id: 'act_res_mon_pm', day: 'Monday', startTime: '13:30', endTime: '15:30', title: 'Research & Literature', categoryId: 'cat_research', location: 'Cubicle' },
-                { id: 'act_prep_mon_pm', day: 'Monday', startTime: '15:30', endTime: '17:30', title: 'Lecture Preparation', categoryId: 'cat_prep', notes: 'Slide deck review' },
-
-                { id: 'act_class_tue_pm', day: 'Tuesday', startTime: '13:30', endTime: '15:30', title: 'Systems Programming Lab', categoryId: 'cat_class', location: 'Lab 3' },
-                { id: 'act_prep_tue_pm', day: 'Tuesday', startTime: '15:30', endTime: '16:30', title: 'Lecture Preparation', categoryId: 'cat_prep' },
-
-                { id: 'act_class_wed_pm', day: 'Wednesday', startTime: '13:30', endTime: '15:30', title: 'AMC Practical Lab', categoryId: 'cat_class', location: 'Lab 1' },
-                { id: 'act_prep_wed_pm', day: 'Wednesday', startTime: '15:30', endTime: '17:30', title: 'Lecture Preparation', categoryId: 'cat_prep' },
-
-                { id: 'act_class_thu_pm', day: 'Thursday', startTime: '13:30', endTime: '15:30', title: 'APA Practical Lab', categoryId: 'cat_class', location: 'Lab 2' },
-                { id: 'act_prep_thu_pm', day: 'Thursday', startTime: '16:30', endTime: '17:30', title: 'Lecture Preparation', categoryId: 'cat_prep' },
-
-                { id: 'act_class_fri_pm', day: 'Friday', startTime: '13:30', endTime: '15:30', title: 'Department Seminar', categoryId: 'cat_class', location: 'Auditorium' },
-                { id: 'act_res_fri_pm', day: 'Friday', startTime: '15:30', endTime: '17:30', title: 'Research Time', categoryId: 'cat_research', notes: 'Synthesis' }
-            ];
-
-            // Mandatory lunch across active days (12:30 - 13:30)
-            appState.config.activeDays.forEach((day, idx) => {
-                appState.activities.push({
-                    id: 'act_lunch_' + idx,
-                    day: day,
-                    startTime: '12:30',
-                    endTime: '13:30',
-                    title: 'Lunch Break',
-                    categoryId: 'cat_lunch',
-                    location: 'Dining Hall',
-                    notes: 'Recharge & rest'
-                });
-            });
-
+        function initializeEmptySchedule() {
+            appState = JSON.parse(JSON.stringify(EMPTY_SCHEDULE_DEFAULTS));
             saveToStorage();
+        }
+
+        // Retained as a compatibility helper: this now resets to a blank schedule,
+        // rather than silently inserting demo activities and preset categories.
+        function populateInitialSampleData() {
+            initializeEmptySchedule();
         }
 
         /**************************************************************
          * 4. RENDER PIPELINE
          **************************************************************/
         function renderAll() {
-            document.getElementById('scheduleTitleInput').value = appState.meta.title || 'Fall Semester — Academic & Research Timetable';
-            document.getElementById('scheduleSubtitleInput').value = appState.meta.subtitle || 'Faculty Schedule • Dept. of Computer Science';
+            document.getElementById('scheduleTitleInput').value = appState.meta.title || 'My Weekly Schedule';
+            document.getElementById('scheduleSubtitleInput').value = appState.meta.subtitle || 'Plan your classes, research, and personal time';
             document.getElementById('headerTimeRangeBadge').textContent = 
                 `${appState.config.dayStart} – ${appState.config.dayEnd} (${appState.config.slotDuration}m grid)`;
 
@@ -3855,7 +3629,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     return aStart < eMins && aEnd > sMins;
                 });
 
-                const onlyFreeOrLunch = overlapping.every(a => a.categoryId === 'cat_free' || a.categoryId === 'cat_lunch');
+                const onlyFreeOrLunch = overlapping.every(a => a.isFreeSlot || a.title === 'Open Slot' || a.title === 'Lunch Break');
 
                 if (overlapping.length === 0 || overwrite || onlyFreeOrLunch) {
                     resolveActivityOverlaps(day, sMins, eMins);
@@ -3865,7 +3639,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                         startTime: lunchStart,
                         endTime: lunchEnd,
                         title: 'Lunch Break',
-                        categoryId: 'cat_lunch',
+                        categoryId: '',
                         location: 'Dining Hall',
                         notes: 'Mandatory daily rest'
                     });
@@ -3881,33 +3655,58 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
          * 6. CATEGORIES & COLOR MANAGEMENT
          **************************************************************/
         function getCategoryById(catId) {
-            return appState.categories.find(c => c.id === catId) || appState.categories[0];
+            return appState.categories.find(c => c.id === catId) || {
+                id: catId || '',
+                name: 'Uncategorised',
+                color: '#94a3b8',
+                isBreak: false,
+                isFree: false,
+                icon: 'fa-tag'
+            };
         }
 
         function renderCategoryManager() {
             const container = document.getElementById('categoryManagerList');
             container.innerHTML = '';
 
-            appState.categories.forEach(cat => {
-                const isProtected = ['cat_free', 'cat_lunch', 'cat_class', 'cat_quiet', 'cat_research', 'cat_prep'].includes(cat.id);
-                const badge = document.createElement('div');
-                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-white shadow-2xs';
-                badge.style.borderColor = hexToRGBA(cat.color, 0.35);
+            if (appState.categories.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'text-sm text-slate-400 italic py-2';
+                empty.textContent = 'No categories created yet. Add your first category above.';
+                container.appendChild(empty);
+                return;
+            }
 
-                badge.innerHTML = `
-                    <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${cat.color}"></span>
-                    <input type="color" value="${cat.color}" onchange="updateCategoryColor('${cat.id}', this.value)" class="w-3.5 h-3.5 rounded-full border-0 cursor-pointer bg-transparent p-0" title="Change color">
-                    <span class="text-slate-800">${escapeHtml(cat.name)}</span>
-                    ${!isProtected ? `<button onclick="deleteCategory('${cat.id}')" class="ml-1 text-slate-400 hover:text-rose-600 transition" title="Delete category"><i class="fa-solid fa-xmark text-[11px]"></i></button>` : ''}
-                `;
+            appState.categories.forEach(cat => {
+                const badge = document.createElement('div');
+                badge.className = 'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium border bg-white shadow-sm';
+                badge.style.borderColor = hexToRGBA(cat.color, 0.45);
+
+                const swatch = document.createElement('span');
+                swatch.className = 'w-3 h-3 rounded-full shrink-0';
+                swatch.style.backgroundColor = cat.color || '#94a3b8';
+
+                const colorInput = document.createElement('input');
+                colorInput.type = 'color';
+                colorInput.value = cat.color || '#94a3b8';
+                colorInput.className = 'w-5 h-5 rounded border-0 cursor-pointer bg-transparent p-0';
+                colorInput.title = `Change ${cat.name} colour`;
+                colorInput.addEventListener('change', () => updateCategoryColor(cat.id, colorInput.value));
+
+                const name = document.createElement('span');
+                name.className = 'text-slate-800';
+                name.textContent = cat.name;
+
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'ml-1 text-slate-400 hover:text-rose-600 transition';
+                remove.title = `Delete ${cat.name}`;
+                remove.innerHTML = '<i class="fa-solid fa-xmark text-[11px]"></i>';
+                remove.addEventListener('click', () => deleteCategory(cat.id));
+
+                badge.append(swatch, colorInput, name, remove);
                 container.appendChild(badge);
             });
-        }
-
-        function restoreMinimalistPalette() {
-            appState.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
-            renderAll();
-            showToast('Restored default category palette!', 'success');
         }
 
         function addNewCategory() {
@@ -3917,6 +3716,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
 
             if (!name) {
                 showToast('Please enter a category name.', 'error');
+                nameInput.focus();
                 return;
             }
             if (appState.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
@@ -3924,21 +3724,18 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 return;
             }
 
-            const lower = name.toLowerCase();
-            const isBreak = lower.includes('relax') || lower.includes('break') || lower.includes('lunch') || lower.includes('rest');
-
             appState.categories.push({
-                id: 'cat_' + Date.now(),
-                name: name,
-                color: colorInput.value || '#3b82f6',
-                isBreak: isBreak,
+                id: 'cat_' + (window.crypto?.randomUUID ? crypto.randomUUID() : Date.now() + '_' + Math.random().toString(36).slice(2, 8)),
+                name,
+                color: colorInput.value || '#64748b',
+                isBreak: false,
                 isFree: false,
                 icon: 'fa-tag'
             });
 
             nameInput.value = '';
             renderAll();
-            showToast(`Category "${name}" added!`, 'success');
+            showToast(`Category "${name}" added.`, 'success');
         }
 
         function updateCategoryColor(catId, newColor) {
@@ -3950,79 +3747,26 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
         }
 
         function deleteCategory(catId) {
+            const cat = appState.categories.find(c => c.id === catId);
+            if (!cat) return;
+            const assignedCount = appState.activities.filter(a => a.categoryId === catId).length;
+            const message = assignedCount
+                ? `Delete "${cat.name}"? ${assignedCount} scheduled activity/activities will become uncategorised.`
+                : `Delete the category "${cat.name}"?`;
+            if (!window.confirm(message)) return;
+
             appState.categories = appState.categories.filter(c => c.id !== catId);
             appState.activities.forEach(a => {
-                if (a.categoryId === catId) a.categoryId = 'cat_free';
+                if (a.categoryId === catId) a.categoryId = '';
             });
+            if (currentActiveCategoryFilter === catId) clearCategoryFilter();
             renderAll();
-            showToast('Category removed.', 'info');
+            showToast(`Category "${cat.name}" removed.`, 'info');
         }
 
         /**************************************************************
          * 7. QUICK-FILL & SMART SLOT ACTIONS
          **************************************************************/
-        // 1-Click quick assign directly from an Open Slot card in the grid
-        function quickAssignDirect(actId, categoryId, title, event) {
-            if (event) event.stopPropagation();
-            const act = appState.activities.find(a => a.id === actId);
-            if (act) {
-                act.categoryId = categoryId;
-                act.title = title;
-                if (!act.badge) act.badge = 'EM';
-                renderAll();
-                showToast(`Assigned "${title}" to ${act.day} ${act.startTime}–${act.endTime}!`, 'success');
-            }
-        }
-
-        // Quick-Fill Early Morning (08:30 – 09:30) across Mon, Tue, Wed
-        function applyEarlyMorningPreset(catId, title) {
-            const targetDays = ['Monday', 'Tuesday', 'Wednesday'].filter(d => appState.config.activeDays.includes(d));
-            let assignedCount = 0;
-
-            targetDays.forEach(day => {
-                const openAct = appState.activities.find(a => 
-                    a.day === day && 
-                    a.startTime === '08:30' && 
-                    a.endTime === '09:30' && 
-                    (a.categoryId === 'cat_free' || a.title === 'Open Slot')
-                );
-
-                if (openAct) {
-                    openAct.categoryId = catId;
-                    openAct.title = title;
-                    openAct.badge = 'EM';
-                    assignedCount++;
-                } else {
-                    // Check if slot is completely empty/unassigned
-                    const hasOccupant = appState.activities.some(a => 
-                        a.day === day && 
-                        timeToMinutes(a.startTime) < 570 && 
-                        timeToMinutes(a.endTime) > 510
-                    );
-                    if (!hasOccupant) {
-                        appState.activities.push({
-                            id: 'act_em_' + day + '_' + Date.now(),
-                            day: day,
-                            startTime: '08:30',
-                            endTime: '09:30',
-                            title: title,
-                            categoryId: catId,
-                            badge: 'EM',
-                            notes: 'Early focus session'
-                        });
-                        assignedCount++;
-                    }
-                }
-            });
-
-            renderAll();
-            if (assignedCount > 0) {
-                showToast(`Assigned "${title}" across ${assignedCount} early morning slot(s)!`, 'success');
-            } else {
-                showToast('Early morning slots on Mon, Tue, and Wed are already scheduled.', 'info');
-            }
-        }
-
         function autoFillFreeSlots() {
             const slots = generateTimeSlots();
             let createdBlocks = 0;
@@ -4054,8 +3798,8 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                                 startTime: minutesToTime(currentFreeStart),
                                 endTime: minutesToTime(currentFreeEnd),
                                 title: 'Open Slot',
-                                categoryId: 'cat_free',
-                                badge: 'EM'
+                                categoryId: '',
+                                isFreeSlot: true,
                             });
                             createdBlocks++;
                             currentFreeStart = null;
@@ -4071,8 +3815,8 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                         startTime: minutesToTime(currentFreeStart),
                         endTime: minutesToTime(currentFreeEnd),
                         title: 'Open Slot',
-                        categoryId: 'cat_free',
-                        badge: 'EM'
+                        categoryId: '',
+                        isFreeSlot: true,
                     });
                     createdBlocks++;
                 }
@@ -4165,8 +3909,8 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                         }
 
                         const cat = getCategoryById(act.categoryId);
-                        const isFreeBlock = cat.id === 'cat_free' || cat.isFree || act.title === 'Open Slot';
-                        const theme = CATEGORY_STYLES[act.categoryId] || {
+                        const isFreeBlock = !!act.isFreeSlot || cat.id === 'cat_free' || cat.isFree || act.title === 'Open Slot';
+                        const theme = {
                             bg: hexToRGBA(cat.color, 0.08),
                             border: hexToRGBA(cat.color, 0.3),
                             badgeBg: hexToRGBA(cat.color, 0.16),
@@ -4191,20 +3935,15 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                             card.innerHTML = `
                                 <div>
                                     <div class="flex items-center gap-1.5 text-xs font-bold text-amber-700">
-                                        <i class="fa-solid fa-sparkles text-[10px]"></i>
-                                        <span>Open Slot</span>
+                                        <i class="fa-regular fa-calendar-plus text-[11px]"></i>
+                                        <span>Available Time</span>
                                     </div>
-                                    <!-- 1-Click Quick Assign Pills inside cell -->
-                                    <div class="mt-2.5 flex flex-wrap items-center gap-1">
-                                        <button type="button" onclick="quickAssignDirect('${act.id}', 'cat_quiet', 'Quiet Time (EM)', event)" class="bg-purple-100 hover:bg-purple-200 text-purple-700 text-[10px] font-semibold px-2 py-0.5 rounded-md transition">+Quiet</button>
-                                        <button type="button" onclick="quickAssignDirect('${act.id}', 'cat_research', 'Research Time', event)" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-[10px] font-semibold px-2 py-0.5 rounded-md transition">+Research</button>
-                                        <button type="button" onclick="quickAssignDirect('${act.id}', 'cat_prep', 'Lecture Preparation (EM)', event)" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[10px] font-semibold px-2 py-0.5 rounded-md transition">+Prep</button>
-                                    </div>
+                                    <div class="mt-2 text-[11px] text-amber-800/80">Click to assign your own activity</div>
                                 </div>
-                                <div class="mt-2 flex items-center justify-between text-[10px] text-amber-700/60 font-medium">
-                                    <span>Click to edit</span>
-                                    <button type="button" onclick="quickDeleteActivity('${act.id}', event)" class="hover:text-rose-600 text-slate-300" title="Delete slot">
-                                        <i class="fa-solid fa-trash-can text-[9px]"></i>
+                                <div class="mt-2 flex items-center justify-between text-[10px] text-amber-700/70 font-medium">
+                                    <span>${act.startTime} – ${act.endTime}</span>
+                                    <button type="button" onclick="quickDeleteActivity('${act.id}', event)" class="hover:text-rose-600 text-slate-400" title="Remove available-time block">
+                                        <i class="fa-solid fa-trash-can text-[10px]"></i>
                                     </button>
                                 </div>
                             `;
@@ -4271,7 +4010,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                         emptyBtn.className = 'scheduler-empty-slot w-full h-full min-h-[95px] rounded-2xl border border-dashed border-slate-200/80 hover:border-amber-300 hover:bg-amber-50/20 p-2 flex flex-col items-center justify-center text-center transition group/btn';
                         emptyBtn.innerHTML = `
                             <span class="text-[11px] font-medium text-slate-400 group-hover/btn:text-amber-700 flex items-center gap-1 transition">
-                                <i class="fa-solid fa-plus text-[10px]"></i> Open
+                                <i class="fa-solid fa-plus text-[10px]"></i> Add
                             </span>
                         `;
                         td.appendChild(emptyBtn);
@@ -4295,7 +4034,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 });
                 if (!act) {
                     freeMins += slot.duration;
-                } else if (act.categoryId === 'cat_free' || act.title === 'Open Slot') {
+                } else if (act.isFreeSlot || act.categoryId === 'cat_free' || act.title === 'Open Slot') {
                     freeMins += slot.duration;
                 }
             });
@@ -4395,57 +4134,91 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
          * 10. ANALYTICS & 5 STAT CARDS
          **************************************************************/
         function renderAnalyticsAndLegend() {
-            const dailyMins = timeToMinutes(appState.config.dayEnd) - timeToMinutes(appState.config.dayStart);
+            const dailyMins = Math.max(0, timeToMinutes(appState.config.dayEnd) - timeToMinutes(appState.config.dayStart));
             const totalCapacityMins = dailyMins * appState.config.activeDays.length;
-
-            let classMins = 0;
-            let quietMins = 0;
-            let researchMins = 0;
-            let prepMins = 0;
-            let openSlotMins = 0;
+            const categoryMinutes = new Map(appState.categories.map(cat => [cat.id, 0]));
             let occupiedMins = 0;
 
             appState.activities.forEach(act => {
-                if (!appState.config.activeDays.includes(act.day)) return;
+                if (!appState.config.activeDays.includes(act.day) || act.isFreeSlot || act.title === 'Open Slot') return;
                 const dur = Math.max(0, timeToMinutes(act.endTime) - timeToMinutes(act.startTime));
                 occupiedMins += dur;
-
-                if (act.categoryId === 'cat_class') {
-                    classMins += dur;
-                } else if (act.categoryId === 'cat_quiet') {
-                    quietMins += dur;
-                } else if (act.categoryId === 'cat_research') {
-                    researchMins += dur;
-                } else if (act.categoryId === 'cat_prep') {
-                    prepMins += dur;
-                } else if (act.categoryId === 'cat_free' || act.title === 'Open Slot') {
-                    openSlotMins += dur;
+                if (act.categoryId && categoryMinutes.has(act.categoryId)) {
+                    categoryMinutes.set(act.categoryId, categoryMinutes.get(act.categoryId) + dur);
                 }
             });
 
-            const unassignedMins = Math.max(0, totalCapacityMins - occupiedMins);
-            const totalFreeMins = openSlotMins + unassignedMins;
+            // Count a grid interval as free when no non-placeholder activity overlaps it.
+            const slots = generateTimeSlots();
+            let totalFreeMins = 0;
+            appState.config.activeDays.forEach(day => {
+                slots.forEach(slot => {
+                    const hasAssignedActivity = appState.activities.some(act => {
+                        if (act.day !== day || act.isFreeSlot || act.title === 'Open Slot') return false;
+                        return timeToMinutes(act.startTime) < slot.endMins && timeToMinutes(act.endTime) > slot.startMins;
+                    });
+                    if (!hasAssignedActivity) totalFreeMins += slot.duration;
+                });
+            });
+
             const freePercent = totalCapacityMins > 0 ? Math.round((totalFreeMins / totalCapacityMins) * 100) : 0;
+            const metrics = document.getElementById('topMetricsRow');
+            metrics.innerHTML = '';
 
-            // Update 5 Main Metric Cards matching user reference image
-            document.getElementById('statClassesHours').textContent = formatHoursDisplay(classMins);
-            document.getElementById('statQuietHours').textContent = formatHoursDisplay(quietMins);
-            document.getElementById('statResearchHours').textContent = formatHoursDisplay(researchMins);
-            document.getElementById('statPrepHours').textContent = formatHoursDisplay(prepMins);
-            document.getElementById('statFreeHoursBadge').textContent = `${formatHoursDisplay(totalFreeMins)} (${freePercent}%)`;
+            if (appState.categories.length === 0) {
+                const hint = document.createElement('div');
+                hint.className = 'col-span-2 sm:col-span-2 lg:col-span-4 bg-white p-4 rounded-2xl border border-dashed border-slate-300 text-sm text-slate-500 flex items-center';
+                hint.innerHTML = '<i class="fa-solid fa-palette text-slate-400 mr-3 text-lg"></i><span>No categories yet. Add your own under <strong>Schedule Setup → Subject Categories & Colors</strong>.</span>';
+                metrics.appendChild(hint);
+            } else {
+                appState.categories.forEach(cat => {
+                    const mins = categoryMinutes.get(cat.id) || 0;
+                    const card = document.createElement('button');
+                    card.type = 'button';
+                    card.className = 'bg-white p-4 rounded-2xl border shadow-sm flex items-center justify-between text-left transition hover:-translate-y-0.5';
+                    card.style.borderColor = hexToRGBA(cat.color || '#94a3b8', 0.28);
+                    card.addEventListener('click', () => setCategoryFilter(cat.id));
+                    card.innerHTML = `
+                        <div class="min-w-0">
+                            <div class="text-xs sm:text-sm font-semibold mb-1 truncate" style="color:${cat.color || '#64748b'}">${escapeHtml(cat.name)}</div>
+                            <div class="text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums">${formatHoursDisplay(mins)}</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">Scheduled time</div>
+                        </div>
+                        <span class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:${hexToRGBA(cat.color || '#94a3b8', 0.12)};color:${cat.color || '#64748b'}"><i class="fa-solid fa-tag"></i></span>
+                    `;
+                    metrics.appendChild(card);
+                });
+            }
 
-            // Print Legend Badges
+            const freeCard = document.createElement('button');
+            freeCard.type = 'button';
+            freeCard.className = 'bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between text-left transition hover:-translate-y-0.5';
+            freeCard.addEventListener('click', clearCategoryFilter);
+            freeCard.innerHTML = `
+                <div>
+                    <div class="text-xs sm:text-sm font-semibold text-indigo-600 mb-1">Available Free</div>
+                    <div class="text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums">${formatHoursDisplay(totalFreeMins)}</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">${freePercent}% of total time</div>
+                </div>
+                <span class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0"><i class="fa-regular fa-clock"></i></span>
+            `;
+            metrics.appendChild(freeCard);
+
             const legendContainer = document.getElementById('exportLegendContainer');
             legendContainer.innerHTML = '';
             appState.categories.forEach(cat => {
                 const leg = document.createElement('span');
                 leg.className = 'inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded';
-                leg.innerHTML = `<span class="w-1.5 h-1.5 rounded-full" style="background-color: ${cat.color}"></span> ${escapeHtml(cat.name)}`;
+                leg.innerHTML = `<span class="w-1.5 h-1.5 rounded-full" style="background-color:${cat.color || '#94a3b8'}"></span> ${escapeHtml(cat.name)}`;
                 legendContainer.appendChild(leg);
             });
 
-            document.getElementById('printableSummaryLine').textContent = 
-                `Summary: ${formatHoursDisplay(classMins)} Classes & Labs • ${formatHoursDisplay(quietMins)} Quiet Time • ${formatHoursDisplay(researchMins)} Research • ${formatHoursDisplay(prepMins)} Lecture Prep • ${formatHoursDisplay(totalFreeMins)} Open Time (${freePercent}%)`;
+            const scheduledMins = Math.max(0, totalCapacityMins - totalFreeMins);
+            const categorySummary = appState.categories
+                .map(cat => `${cat.name}: ${formatHoursDisplay(categoryMinutes.get(cat.id) || 0)}`)
+                .join(' • ');
+            document.getElementById('printableSummaryLine').textContent =
+                `Scheduled: ${formatHoursDisplay(scheduledMins)} • Available: ${formatHoursDisplay(totalFreeMins)} (${freePercent}%)${categorySummary ? ' • ' + categorySummary : ''}`;
         }
 
         /**************************************************************
@@ -4460,6 +4233,10 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             // Category select options
             const catSelect = document.getElementById('actCategory');
             catSelect.innerHTML = '';
+            const noCategoryOption = document.createElement('option');
+            noCategoryOption.value = '';
+            noCategoryOption.textContent = appState.categories.length ? 'No category' : 'No categories created';
+            catSelect.appendChild(noCategoryOption);
             appState.categories.forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c.id;
@@ -4496,7 +4273,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 editingIdInput.value = existingActivity.id;
                 modalTitle.textContent = 'Edit Slot Details';
                 document.getElementById('actTitle').value = existingActivity.title === 'Open Slot' ? '' : existingActivity.title;
-                document.getElementById('actCategory').value = existingActivity.categoryId === 'cat_free' ? 'cat_prep' : existingActivity.categoryId;
+                document.getElementById('actCategory').value = existingActivity.categoryId || '';
                 document.getElementById('actBadge').value = existingActivity.badge || '';
                 document.getElementById('actStartTime').value = existingActivity.startTime;
                 document.getElementById('actEndTime').value = existingActivity.endTime;
@@ -4507,8 +4284,8 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 editingIdInput.value = '';
                 modalTitle.textContent = 'Assign New Activity Slot';
                 document.getElementById('actTitle').value = '';
-                document.getElementById('actCategory').value = 'cat_class';
-                document.getElementById('actBadge').value = 'EM';
+                document.getElementById('actCategory').value = '';
+                document.getElementById('actBadge').value = '';
                 const defaultStart = options.startTime || appState.config.dayStart;
                 const defaultEnd = options.endTime || minutesToTime(Math.min(timeToMinutes(defaultStart) + appState.config.slotDuration, timeToMinutes(appState.config.dayEnd)));
                 document.getElementById('actStartTime').value = defaultStart;
@@ -4612,12 +4389,6 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             }
         }
 
-        function applyQuickPreset(title, catId, badge) {
-            document.getElementById('actTitle').value = title;
-            document.getElementById('actCategory').value = catId;
-            document.getElementById('actBadge').value = badge || '';
-        }
-
         function closeActivityModal() {
             document.getElementById('activityModal').classList.add('hidden');
             pendingActivitySave = null;
@@ -4661,7 +4432,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             e.preventDefault();
             const editingId = document.getElementById('editingActivityId').value;
             const title = document.getElementById('actTitle').value.trim();
-            const categoryId = document.getElementById('actCategory').value;
+            const categoryId = document.getElementById('actCategory').value || '';
             const badge = document.getElementById('actBadge').value.trim();
             const startTime = document.getElementById('actStartTime').value;
             const endTime = document.getElementById('actEndTime').value;
@@ -4688,7 +4459,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     if (activity.day !== day || activity.id === editingId) return;
 
                     const existingCategory = getCategoryById(activity.categoryId);
-                    const isAvailabilityPlaceholder = activity.title === 'Open Slot' ||
+                    const isAvailabilityPlaceholder = activity.isFreeSlot || activity.title === 'Open Slot' ||
                         activity.categoryId === 'cat_free' || (existingCategory && existingCategory.isFree);
                     if (isAvailabilityPlaceholder) return;
 
@@ -4805,7 +4576,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                     startTime: saveData.startTime,
                     endTime: saveData.endTime,
                     title: saveData.title,
-                    categoryId: saveData.categoryId,
+                    categoryId: saveData.categoryId || '',
                     badge: saveData.badge,
                     location: saveData.location,
                     notes: saveData.notes
@@ -4874,7 +4645,7 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 aoa.push(['Category', 'Weekly Hours']);
 
                 appState.categories.forEach(cat => {
-                    if (cat.id === 'cat_free') return;
+                    if (cat.isFree) return;
                     let mins = 0;
                     appState.activities.forEach(a => {
                         if (activeDays.includes(a.day) && a.categoryId === cat.id) {
@@ -4918,48 +4689,143 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
             }
         }
 
-        async function exportToPDF() {
+        function exportToPDF() {
             document.getElementById('exportMenu').classList.add('hidden');
-            showToast('Generating landscape PDF...', 'info');
             try {
-                const element = document.getElementById('printableTimetableArea');
-                const canvas = await html2canvas(element, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#ffffff'
-                });
-                const imgData = canvas.toDataURL('image/png');
                 const jspdfLib = window.jspdf || window.jsPDF;
-                const jsPDFConstructor = jspdfLib && jspdfLib.jsPDF ? jspdfLib.jsPDF : jspdfLib;
-                if (!jsPDFConstructor) throw new Error('jsPDF not loaded.');
+                const JsPDF = jspdfLib && jspdfLib.jsPDF ? jspdfLib.jsPDF : jspdfLib;
+                if (typeof JsPDF !== 'function') {
+                    showToast('PDF library unavailable. Opening the browser print dialog instead.', 'info');
+                    window.print();
+                    return;
+                }
 
-                const pdf = new jsPDFConstructor('l', 'mm', 'a4');
+                const pdf = new JsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
                 const margin = 8;
+                const titleHeight = 23;
+                const tableHeaderHeight = 9;
+                const rowHeight = 9;
+                const timeColWidth = 25;
+                const days = appState.config.activeDays;
+                const slots = generateTimeSlots();
+                const dayColWidth = (pageWidth - margin * 2 - timeColWidth) / Math.max(days.length, 1);
+                const rowsPerPage = Math.max(1, Math.floor((pageHeight - margin * 2 - titleHeight - tableHeaderHeight - 8) / rowHeight));
+                const totalPages = Math.max(1, Math.ceil(slots.length / rowsPerPage));
 
-                const availW = pageWidth - margin * 2;
-                const availH = pageHeight - margin * 2;
+                const rgbFromHex = (hex, fallback = [226, 232, 240]) => {
+                    if (!hex || !/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return fallback;
+                    let value = hex.slice(1);
+                    if (value.length === 3) value = value.split('').map(ch => ch + ch).join('');
+                    return [0, 2, 4].map(i => parseInt(value.slice(i, i + 2), 16));
+                };
+                const safeText = value => String(value ?? '').replace(/[\r\n]+/g, ' ').trim();
 
-                const imgProps = pdf.getImageProperties(imgData);
-                let renderW = availW;
-                let renderH = (imgProps.height * renderW) / imgProps.width;
+                const drawPageHeader = (pageNo) => {
+                    pdf.setFillColor(248, 250, 252);
+                    pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+                    pdf.setTextColor(15, 23, 42);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setFontSize(16);
+                    pdf.text(safeText(appState.meta.title || 'Academic Timetable'), margin, margin + 5);
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.setFontSize(8);
+                    pdf.setTextColor(100, 116, 139);
+                    const subtitle = safeText(appState.meta.subtitle || '');
+                    if (subtitle) pdf.text(subtitle, margin, margin + 10);
+                    pdf.text(`${appState.config.dayStart} – ${appState.config.dayEnd} · ${appState.config.slotDuration}-minute grid`, margin, margin + 15);
+                    if (pageNo > 1) {
+                        pdf.setFontSize(8);
+                        pdf.text(`Continued · Page ${pageNo} of ${totalPages}`, pageWidth - margin, margin + 5, { align: 'right' });
+                    }
 
-                if (renderH > availH) {
-                    renderH = availH;
-                    renderW = (imgProps.width * renderH) / imgProps.height;
+                    const tableY = margin + titleHeight;
+                    pdf.setFillColor(30, 41, 59);
+                    pdf.rect(margin, tableY, timeColWidth, tableHeaderHeight, 'F');
+                    pdf.setTextColor(255, 255, 255);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setFontSize(7.5);
+                    pdf.text('TIME', margin + 2, tableY + 5.8);
+                    days.forEach((day, idx) => {
+                        const x = margin + timeColWidth + idx * dayColWidth;
+                        pdf.setFillColor(30, 41, 59);
+                        pdf.rect(x, tableY, dayColWidth, tableHeaderHeight, 'F');
+                        pdf.setTextColor(255, 255, 255);
+                        pdf.text(day.slice(0, 3).toUpperCase(), x + dayColWidth / 2, tableY + 5.8, { align: 'center' });
+                    });
+                    return tableY + tableHeaderHeight;
+                };
+
+                for (let pageNo = 1; pageNo <= totalPages; pageNo++) {
+                    if (pageNo > 1) pdf.addPage('a4', 'landscape');
+                    let y = drawPageHeader(pageNo);
+                    const startIndex = (pageNo - 1) * rowsPerPage;
+                    const pageSlots = slots.slice(startIndex, startIndex + rowsPerPage);
+
+                    pageSlots.forEach((slot, localIndex) => {
+                        const rowY = y + localIndex * rowHeight;
+                        pdf.setFillColor(241, 245, 249);
+                        pdf.rect(margin, rowY, timeColWidth, rowHeight, 'F');
+                        pdf.setDrawColor(226, 232, 240);
+                        pdf.setLineWidth(0.18);
+                        pdf.rect(margin, rowY, timeColWidth, rowHeight);
+                        pdf.setTextColor(51, 65, 85);
+                        pdf.setFont('helvetica', 'bold');
+                        pdf.setFontSize(6.5);
+                        pdf.text(`${slot.start}–${slot.end}`, margin + 1.5, rowY + 5.5);
+
+                        days.forEach((day, dayIndex) => {
+                            const x = margin + timeColWidth + dayIndex * dayColWidth;
+                            const act = appState.activities.find(item => {
+                                if (item.day !== day) return false;
+                                return timeToMinutes(item.startTime) < slot.endMins && timeToMinutes(item.endTime) > slot.startMins;
+                            });
+
+                            pdf.setFillColor(255, 255, 255);
+                            pdf.setDrawColor(226, 232, 240);
+                            pdf.rect(x, rowY, dayColWidth, rowHeight, 'FD');
+                            if (!act) return;
+
+                            const isOpenPlaceholder = act.isFreeSlot || act.title === 'Open Slot';
+                            const cat = getCategoryById(act.categoryId);
+                            const base = isOpenPlaceholder ? [255, 251, 235] : rgbFromHex(cat.color, [226, 232, 240]);
+                            const pale = isOpenPlaceholder ? [255, 251, 235] : base.map(channel => Math.round(channel + (255 - channel) * 0.86));
+                            pdf.setFillColor(pale[0], pale[1], pale[2]);
+                            pdf.setDrawColor(base[0], base[1], base[2]);
+                            pdf.roundedRect(x + 0.5, rowY + 0.5, dayColWidth - 1, rowHeight - 1, 1, 1, 'FD');
+
+                            const isFirstVisibleSlot = timeToMinutes(act.startTime) >= slot.startMins && timeToMinutes(act.startTime) < slot.endMins;
+                            const label = isFirstVisibleSlot ? safeText(act.title || 'Untitled activity') : 'continued';
+                            pdf.setTextColor(30, 41, 59);
+                            pdf.setFont('helvetica', isFirstVisibleSlot ? 'bold' : 'normal');
+                            pdf.setFontSize(6.2);
+                            const maxTextWidth = dayColWidth - 3;
+                            const lines = pdf.splitTextToSize(label, maxTextWidth).slice(0, 2);
+                            pdf.text(lines, x + 1.5, rowY + (lines.length > 1 ? 3.5 : 5.5));
+                            if (isFirstVisibleSlot && act.location && dayColWidth > 27) {
+                                pdf.setFont('helvetica', 'normal');
+                                pdf.setFontSize(5.2);
+                                pdf.setTextColor(100, 116, 139);
+                                pdf.text(safeText(act.location).slice(0, 36), x + 1.5, rowY + 7.5);
+                            }
+                        });
+                    });
+
+                    const footerY = pageHeight - 4;
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.setFontSize(7);
+                    pdf.setTextColor(100, 116, 139);
+                    pdf.text(`Generated by Easy Scheduler · ${new Date().toLocaleDateString()}`, margin, footerY);
+                    pdf.text(`Page ${pageNo} of ${totalPages}`, pageWidth - margin, footerY, { align: 'right' });
                 }
 
-                const xOffset = (pageWidth - renderW) / 2;
-                const yOffset = (pageHeight - renderH) / 2;
-
-                pdf.addImage(imgData, 'PNG', xOffset, yOffset, renderW, renderH);
                 pdf.save('Academic_Timetable.pdf');
-                showToast('Landscape PDF downloaded!', 'success');
+                showToast('PDF downloaded successfully.', 'success');
             } catch (err) {
-                console.error(err);
-                showToast('PDF export failed.', 'error');
+                console.error('PDF export failed:', err);
+                showToast('PDF export failed. Opening browser print dialog as a fallback.', 'error');
+                window.print();
             }
         }
 
@@ -4985,7 +4851,12 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (imported && imported.config && Array.isArray(imported.categories) && Array.isArray(imported.activities)) {
-                        appState = imported;
+                        appState = {
+                            meta: { ...EMPTY_SCHEDULE_DEFAULTS.meta, ...(imported.meta || {}) },
+                            config: { ...EMPTY_SCHEDULE_DEFAULTS.config, ...(imported.config || {}) },
+                            categories: imported.categories || [],
+                            activities: imported.activities || []
+                        };
                         initConfigPanelUI();
                         renderAll();
                         showToast('Timetable template restored successfully!', 'success');
@@ -4998,14 +4869,6 @@ button, input:where([type='button'], [type='reset'], [type='submit']), ::file-se
                 event.target.value = '';
             };
             reader.readAsText(file);
-        }
-
-        function loadSampleSchedule() {
-            document.getElementById('exportMenu').classList.add('hidden');
-            populateInitialSampleData();
-            initConfigPanelUI();
-            renderAll();
-            showToast('Loaded demo academic schedule!', 'success');
         }
 
         function openConfirmClearModal() {
