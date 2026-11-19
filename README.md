@@ -1,106 +1,153 @@
-# Easy Scheduler — Academic Timetable & Smart Slot Planner
+# Easy Scheduler — React v2
 
-Easy Scheduler is a browser-based timetable planner for students, professors, researchers, and academic staff. Build a weekly schedule, organise activities with your own categories and colours, identify unassigned time, detect scheduling conflicts, and export the timetable.
+Easy Scheduler is a browser-based weekly timetable planner for students, educators, researchers, and academic staff. React v2 provides a weekly timetable grid, a focused day view, activity and category management, scheduling-conflict detection, and export/import tools.
 
-## Live site
-
-**[Open Easy Scheduler](https://elvismartis.github.io/Easy_Scheduler/)**
-
-The application runs in the browser. Your timetable is saved in the browser's local storage; use the JSON export to create a backup or move a schedule to another browser or device.
-
----
+**Live application:** https://elvismartis.github.io/Easy_Scheduler/
 
 ## Features
 
-### Flexible timetable setup
+### Timetable setup
+- Set a timetable title and subtitle.
+- Choose active days from Monday to Sunday.
+- Configure the timetable start time and end time.
+- Choose a slot interval of 15, 30, 45, 60, 90, or 120 minutes.
+- View the schedule as a weekly grid or as an individual day.
 
-- Set the timetable title and subtitle.
-- Choose active days from Monday to Sunday, with weekday and full-week shortcuts.
-- Configure daily start and end times.
-- Choose a 15-, 30-, 45-, 60-, or 90-minute slot interval, or define a custom interval.
-- Configure a daily lunch window and apply it to the timetable.
+### Activities
+- Add, edit, and delete activities.
+- Set an activity title, category, day or days, start and end times, tag/batch, room/location, and notes.
+- Schedule a recurring activity on multiple selected days.
+- Detect overlaps with existing activities on the same day.
+- Review the conflicting activity and overlap interval before deciding whether to edit the proposed activity or save it anyway.
 
-### Blank schedule when you start
+### Categories
+- Create custom subject or activity categories.
+- Choose and change a colour for each category.
+- Delete categories. Activities previously assigned to a deleted category remain in the timetable as uncategorised activities.
 
-- A new installation opens with an empty timetable; no sample activities are inserted automatically.
-- No subject categories or category colours are preloaded.
-- The initial configuration uses Monday to Saturday, 08:30–17:30, and a 60-minute slot interval. You can change these settings in **Schedule Setup**.
+### Search and schedule summaries
+- Search activities by title, location, or notes.
+- View scheduled hours, activity count, category count, and available time.
+- Review the timetable in weekly-grid and day views.
 
-### User-defined categories and colours
-
-- Create the categories you need; the application does not impose a preset category list.
-- Choose a colour for each category and adjust it later.
-- Edit or remove categories from **Subject Categories & Colors**.
-- Assign a category to an activity when adding or editing a timetable slot.
-
-### Activity management and conflict detection
-
-- Add activities from the **Add Activity** button or by selecting a timetable slot.
-- Record the activity title, category, day or days, start and end times, location, tag, and notes.
-- Assign recurring activities to multiple days.
-- When a new or edited activity overlaps an existing scheduled activity on the same day, Easy Scheduler displays a conflict warning with the existing activity and overlapping time interval.
-- Choose **Go back and edit** to cancel the pending save, or **Save anyway** to proceed.
-- When you choose to save despite a conflict, the new activity takes the overlapping time; any non-overlapping portion of the existing activity is retained.
-- Availability placeholders such as Open Slots are excluded from clash warnings so that free time can be assigned normally.
-
-### Find and manage free time
-
-- Use **Fill Empty** to mark unassigned gaps as editable Open Slots.
-- Review free time in the weekly grid and day view.
-- Use the free-time summaries to understand how much of the timetable remains unassigned.
-
-### Weekly and mobile views
-
-- **Weekly Grid:** See the week in a table with a sticky time column and horizontal scrolling when needed.
-- **Day View:** Review one day as a vertical list of activity cards.
-- The layout includes mobile-friendly controls and touch targets.
-
-### Export and backup
-
-- **Excel (`.xlsx`):** Export a two-dimensional weekly timetable and schedule summary.
-- **PDF (`.pdf`):** Export a landscape A4 timetable. The PDF is generated with jsPDF and can span multiple pages when required. If the PDF library is unavailable or PDF generation fails, the application falls back to the browser print dialog.
-- **PNG (`.png`):** Export a high-resolution image of the timetable.
-- **JSON (`.json`):** Export or import a schedule template for backup and transfer.
-- **Repository ZIP (`.zip`):** Download a ZIP package of the project from the Export menu.
-
----
+### Export and data transfer
+- **Excel (`.xlsx`):** Export the timetable as a spreadsheet.
+- **PDF (`.pdf`):** Export a landscape A4 timetable.
+- **PNG (`.png`):** Export an image of the timetable.
+- **JSON (`.json`):** Export a schedule backup or import a previously exported schedule.
 
 ## Getting started
 
-1. Open the [live scheduler](https://elvismartis.github.io/Easy_Scheduler/).
-2. Open **Schedule Setup** and enter a timetable title and subtitle.
-3. Select active days, daily start and end times, and the slot interval.
-4. Add the subject categories you want under **Subject Categories & Colors**, selecting a colour for each one.
-5. Click **Apply & Save Schedule Settings**.
-6. Add activities using **Add Activity** or by selecting an empty slot in the timetable. Enter the title, category, day or days, start and end times, and any optional location or notes.
-7. Use **Fill Empty** to mark the remaining unassigned gaps as Open Slots.
-8. Use **Export** to download an Excel workbook, PDF, PNG image, or JSON backup.
+1. Open the [live application](https://elvismartis.github.io/Easy_Scheduler/).
+2. In **Schedule Setup**, enter a timetable title and subtitle.
+3. Select the active days, start and end times, and slot interval.
+4. Add any categories you need and choose their colours.
+5. Select **Add Activity** or choose an empty timetable slot.
+6. Enter the activity details and save.
+7. Use the weekly grid or day view to review and manage your timetable.
+8. Use **Export** to create an Excel, PDF, PNG, or JSON file. Use **Import JSON** to restore a schedule.
 
-## Schedule conflict behaviour
+## Run locally
 
-Conflict detection compares the proposed activity's time interval with existing activities on each selected day. Two activities that meet exactly at an endpoint—for example, 09:00–10:00 and 10:00–11:00—are not treated as overlapping. If an overlap is found, the application pauses the save and asks the user to choose whether to return to editing or save anyway.
+### Requirements
+- Node.js (an active LTS release is recommended).
+- npm.
+
+### Install and start the development server
+
+From the repository root:
+
+```bash
+cd easy-scheduler-react-v2
+npm ci
+npm run dev
+```
+
+Vite prints a local development URL in the terminal. Open that URL in a browser.
+
+### Create and preview a production build
+
+```bash
+npm run build
+npm run preview
+```
+
+The production files are generated in `easy-scheduler-react-v2/dist/`.
+
+## GitHub Pages deployment
+
+The React application is in the `easy-scheduler-react-v2/` subdirectory. For the repository project site:
+
+`https://elvismartis.github.io/Easy_Scheduler/`
+
+Vite must use the repository path as its base URL. In `easy-scheduler-react-v2/vite.config.js`, configure:
+
+```js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/Easy_Scheduler/',
+})
+```
+
+If the Vite configuration already contains other settings, retain them and add the `base` property.
+
+### Deploy with GitHub Actions
+
+1. In the repository, create `.github/workflows/deploy.yml`.
+2. Configure the workflow to install dependencies and build from `easy-scheduler-react-v2/`.
+3. Upload `easy-scheduler-react-v2/dist/` as the Pages artifact and deploy it using the GitHub Pages Actions workflow.
+4. In the repository's **Settings → Pages**, set the publishing source to **GitHub Actions**.
+5. Push or merge the deployment workflow to the production branch configured by the workflow.
+6. Check the **Actions** tab for a successful deployment, then open the live site.
+
+The deployment workflow should use the committed `package-lock.json` and run `npm ci` before `npm run build`. The repository currently uses a SheetJS package tarball hosted by SheetJS; if npm's remote-dependency policy blocks installation in CI, configure the installation step to permit the explicitly declared remote dependency (for example, `npm ci --allow-remote=root`) and verify that the workflow succeeds.
+
+**Production caution:** GitHub Pages serves one production site for this repository. Deploying React v2 to the repository's Pages site replaces the currently published site, so test the build locally or in a separate test repository/site before switching production from v1 to v2.
+
+## Data storage and privacy
+
+The timetable is stored in the browser's `localStorage` on the device and browser where it was created. It is not automatically synchronised across browsers or devices. Export a JSON file to back up or transfer a schedule. Clearing browser site data may remove the locally stored timetable.
 
 ## Technology
 
-- HTML, CSS, and JavaScript
-- Tailwind CSS utility styling (bundled in the page)
+- React 18
+- Vite 6
+- JavaScript, HTML, and CSS
+- [Lucide React](https://lucide.dev/) for icons
 - [SheetJS](https://sheetjs.com/) for Excel export
-- [jsPDF](https://github.com/parallax/jsPDF) for landscape PDF export
+- [jsPDF](https://github.com/parallax/jsPDF) for PDF export
 - [html2canvas](https://html2canvas.hertzen.com/) for PNG export
-- [JSZip](https://stuk.github.io/jszip/) for repository ZIP packaging
-- Font Awesome icons and the Inter typeface
 
-## Deployment with GitHub Pages
+## Project structure
 
-1. Keep `index.html` in the root of the GitHub repository.
-2. Commit and push the updated file to the branch used by GitHub Pages.
-3. In the repository settings, open **Pages** and confirm the publishing branch and root folder.
-4. Open the live site link above. After a deployment, refresh the page; if an older version remains cached, perform a hard refresh.
+```text
+Easy_Scheduler/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
+├── easy-scheduler-react-v2/
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── vite.config.js
+│   └── src/
+│       ├── App.jsx
+│       ├── main.jsx
+│       ├── styles.css
+│       ├── components/
+│       └── lib/
+│           └── scheduler.js
+├── obsolete/
+├── index.html
+├── LICENSE
+└── README.md
+```
 
-## Data and privacy
-
-The timetable is stored in the browser's `localStorage` on the device and browser where it was created. It is not automatically synchronised across devices. Export a JSON template regularly if you need a portable backup. Clearing browser site data can remove the locally stored timetable.
+The exact contents of the repository may evolve as development continues.
 
 ## License
 
-This project is distributed under the **MIT License**. See the repository's `LICENSE` file for the full license text.
+This project is distributed under the **MIT License**. See the [`LICENSE`](LICENSE) file for the full license text.
