@@ -1,6 +1,5 @@
 import React,{useEffect,useMemo,useReducer,useState}from'react';
 import{CalendarDays,Plus,Download,Settings,Search,FlaskConical,BookOpen,GraduationCap,Trash2,Clock,ChevronDown,Calendar,Grid3X3,CalendarDays as DayIcon,AlertTriangle,X,FileSpreadsheet,FileImage,FileJson,Printer,Palette,RotateCcw}from'lucide-react';
-import{jsPDF}from'jspdf';import html2canvas from'html2canvas';import*as XLSX from'xlsx';
 import{DAYS,DEFAULT_CONFIG,minutes,time,display,slotsFor,conflictsFor,uid}from'./lib/scheduler.js';
 const KEY='easy-scheduler-react-v2';
 const initial=()=>({title:'My Weekly Schedule',subtitle:'Academic · Research · Personal',config:DEFAULT_CONFIG,categories:[],activities:[]});
@@ -18,9 +17,59 @@ const addCategory=()=>{if(!categoryName.trim())return;dispatch({type:'category-a
 const filtered=state.activities.filter(a=>(a.title+' '+a.location+' '+a.notes).toLowerCase().includes(query.toLowerCase()));
 const categoryHours=id=>state.activities.filter(a=>a.categoryId===id).reduce((n,a)=>n+(minutes(a.end)-minutes(a.start)),0)/60;
 const totalScheduled=state.activities.reduce((n,a)=>n+minutes(a.end)-minutes(a.start),0)/60;
-const exportExcel=()=>{const rows=[['Time',...visibleDays],...slots.map(s=>[`${s.start}–${s.end}`,...visibleDays.map(d=>{const a=state.activities.find(x=>x.day===d&&minutes(x.start)<s.to&&minutes(x.end)>s.from);return a?`${a.title}${a.location?' · '+a.location:''}`:'Free'})])];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Timetable');XLSX.writeFile(wb,'Easy-Scheduler.xlsx')};
-const exportPDF=()=>{const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});const w=pdf.internal.pageSize.getWidth();pdf.setFontSize(18);pdf.text(state.title,10,13);pdf.setFontSize(9);pdf.text(state.subtitle,10,19);const left=10,top=26,timeW=25,col=(w-20-timeW)/Math.max(visibleDays.length,1),rh=Math.min(12,Math.max(6,150/Math.max(slots.length,1)));pdf.setFillColor(30,41,59);pdf.rect(left,top,timeW+col*visibleDays.length,8,'F');pdf.setTextColor(255);pdf.text('TIME',left+2,top+5.5);visibleDays.forEach((d,i)=>pdf.text(d.slice(0,3).toUpperCase(),left+timeW+i*col+col/2,top+5.5,{align:'center'}));slots.forEach((s,i)=>{let y=top+8+i*rh;if(y+rh>pdf.internal.pageSize.getHeight()-12){pdf.addPage();y=15}pdf.setTextColor(30,41,59);pdf.setFillColor(241,245,249);pdf.rect(left,y,timeW,rh,'FD');pdf.setFontSize(7);pdf.text(`${s.start}-${s.end}`,left+1,y+rh/2+1);visibleDays.forEach((d,j)=>{const x=left+timeW+j*col;const a=state.activities.find(q=>q.day===d&&minutes(q.start)<s.to&&minutes(q.end)>s.from);pdf.setFillColor(255);pdf.rect(x,y,col,rh,'FD');if(a){const c=state.categories.find(q=>q.id===a.categoryId);const hex=(c?.color||'#cbd5e1').replace('#','');const rgb=[0,2,4].map(k=>parseInt(hex.slice(k,k+2),16));pdf.setFillColor(...rgb);pdf.roundedRect(x+.5,y+.5,col-1,rh-1,1,1,'F');pdf.setTextColor(20,30,45);pdf.text(a.title.slice(0,25),x+1,y+rh/2+1)}})});pdf.save('Easy-Scheduler.pdf')};
-const exportPNG=async()=>{const el=document.getElementById('schedule-capture');const canvas=await html2canvas(el,{scale:2,backgroundColor:'#fff'});const a=document.createElement('a');a.download='Easy-Scheduler.png';a.href=canvas.toDataURL();a.click()};
+const exportExcel = async () => {
+  const XLSX = await import('xlsx');
+
+  const rows = [
+    ['Time', ...visibleDays],
+    ...slots.map(s => [
+      `${s.start}–${s.end}`,
+      ...visibleDays.map(d => {
+        const a = state.activities.find(
+          x => x.day === d &&
+          minutes(x.start) < s.to &&
+          minutes(x.end) > s.from
+        );
+
+        return a
+          ? `${a.title}${a.location ? ' · ' + a.location : ''}`
+          : 'Free';
+      })
+    ])
+  ];
+
+  const wb = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.aoa_to_sheet(rows),
+    'Timetable'
+  );
+
+  XLSX.writeFile(wb, 'Easy-Scheduler.xlsx');
+};
+const exportPDF = async () => {const { jsPDF } = await import('jspdf');
+const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});const w=pdf.internal.pageSize.getWidth();pdf.setFontSize(18);pdf.text(state.title,10,13);pdf.setFontSize(9);pdf.text(state.subtitle,10,19);const left=10,top=26,timeW=25,col=(w-20-timeW)/Math.max(visibleDays.length,1),rh=Math.min(12,Math.max(6,150/Math.max(slots.length,1)));pdf.setFillColor(30,41,59);pdf.rect(left,top,timeW+col*visibleDays.length,8,'F');pdf.setTextColor(255);pdf.text('TIME',left+2,top+5.5);visibleDays.forEach((d,i)=>pdf.text(d.slice(0,3).toUpperCase(),left+timeW+i*col+col/2,top+5.5,{align:'center'}));slots.forEach((s,i)=>{let y=top+8+i*rh;if(y+rh>pdf.internal.pageSize.getHeight()-12){pdf.addPage();y=15}pdf.setTextColor(30,41,59);pdf.setFillColor(241,245,249);pdf.rect(left,y,timeW,rh,'FD');pdf.setFontSize(7);pdf.text(`${s.start}-${s.end}`,left+1,y+rh/2+1);visibleDays.forEach((d,j)=>{const x=left+timeW+j*col;const a=state.activities.find(q=>q.day===d&&minutes(q.start)<s.to&&minutes(q.end)>s.from);pdf.setFillColor(255);pdf.rect(x,y,col,rh,'FD');if(a){const c=state.categories.find(q=>q.id===a.categoryId);const hex=(c?.color||'#cbd5e1').replace('#','');const rgb=[0,2,4].map(k=>parseInt(hex.slice(k,k+2),16));pdf.setFillColor(...rgb);pdf.roundedRect(x+.5,y+.5,col-1,rh-1,1,1,'F');pdf.setTextColor(20,30,45);pdf.text(a.title.slice(0,25),x+1,y+rh/2+1)}})});pdf.save('Easy-Scheduler.pdf')};
+const exportPNG = async () => {
+  const html2canvas = (await import('html2canvas')).default;
+
+  const el = document.getElementById('schedule-capture');
+
+  if (!el) {
+    notify('Schedule element not found.');
+    return;
+  }
+
+  const canvas = await html2canvas(el, {
+    scale: 2,
+    backgroundColor: '#fff'
+  });
+
+  const a = document.createElement('a');
+  a.download = 'Easy-Scheduler.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+};
 const exportJSON=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download='easy-scheduler.json';a.click();URL.revokeObjectURL(a.href)};
 const importJSON=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const p=JSON.parse(r.result);if(!p.config||!Array.isArray(p.activities)||!Array.isArray(p.categories))throw Error();dispatch({type:'load',value:{...initial(),...p}});notify('Schedule imported.')}catch{notify('Invalid scheduler JSON file.')}};r.readAsText(f);e.target.value=''};
 return <div className="app"><header className="topbar"><div className="brand"><CalendarDays/><div><b>Easy Scheduler</b><small>Academic Timetable & Smart Slot Planner · React v2</small></div></div><div className="tools"><label className="search"><Search/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search activities, rooms, notes…"/></label><button className="primary" onClick={()=>openNew()}><Plus/> Add Activity</button><button onClick={()=>setShowSetup(!showSetup)}><Settings/> Setup</button><div className="dropdown"><button><Download/> Export <ChevronDown/></button><div className="dropmenu"><button onClick={exportPDF}>PDF timetable</button><button onClick={exportExcel}>Excel workbook</button><button onClick={exportPNG}>PNG image</button><button onClick={exportJSON}>JSON backup</button><label>Import JSON<input type="file" accept=".json,application/json" onChange={importJSON}/></label><button onClick={()=>window.print()}><Printer/> Print</button></div></div></div></header>
